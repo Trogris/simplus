@@ -3,9 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Simplus — Gestão Financeira</title>
+<title>Conta Fácil — Gestão Financeira</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root {
@@ -17,7 +18,7 @@
   --red:#dc2626;--red-bg:#fef2f2;
   --amber:#d97706;--amber-bg:#fffbeb;
   --radius-sm:6px;--radius:10px;--radius-lg:14px;
-  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --mono:'DM Mono',monospace;--sans:'Plus Jakarta Sans',sans-serif;
   --sidebar-w:220px;--topbar-h:52px;--bottom-h:60px;
   --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
 }
@@ -217,7 +218,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 
 <div id="auth-screen">
   <div class="auth-card">
-    <div class="auth-logo">Simplus</div>
+    <div class="auth-logo">Conta Fácil</div>
     <div class="auth-sub">Gestão financeira para pequenas e médias empresas</div>
     <div class="auth-tabs">
       <div class="auth-tab active" onclick="switchAuthTab('login',this)">Entrar</div>
@@ -225,13 +226,13 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
     </div>
     <div id="auth-login">
       <div class="form-group"><label class="form-label">E-MAIL</label><input class="form-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"></div>
-      <div class="form-group"><label class="form-label">SENHA</label><input class="form-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+      <div class="form-group"><label class="form-label">SENHA</label><div style="position:relative"><input class="form-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password" style="padding-right:38px"><button type="button" onclick="togglePass('login-pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center" title="Mostrar/ocultar senha"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
     </div>
     <div id="auth-signup" style="display:none">
       <div class="form-group"><label class="form-label">NOME COMPLETO</label><input class="form-input" type="text" id="signup-name" placeholder="Seu nome"></div>
       <div class="form-group"><label class="form-label">E-MAIL</label><input class="form-input" type="email" id="signup-email" placeholder="seu@email.com"></div>
-      <div class="form-group"><label class="form-label">SENHA</label><input class="form-input" type="password" id="signup-pass" placeholder="Mínimo 6 caracteres"></div>
+      <div class="form-group"><label class="form-label">SENHA</label><div style="position:relative"><input class="form-input" type="password" id="signup-pass" placeholder="Mínimo 6 caracteres" style="padding-right:38px"><button type="button" onclick="togglePass('signup-pass',this)" style="position:absolute;right:10px;top:50%;transform:translateY(-50%);background:none;border:none;cursor:pointer;padding:2px;color:var(--text3);display:flex;align-items:center" title="Mostrar/ocultar senha"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg></button></div></div>
       <button class="btn-primary" id="btn-signup" onclick="doSignup()">Criar conta</button>
     </div>
     <div id="auth-msg" class="auth-msg" style="display:none"></div>
@@ -263,7 +264,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
       <div class="form-group"><label class="form-label">FATURAMENTO ANUAL (R$)</label><input class="form-input" type="number" id="onb-revenue" placeholder="0"></div>
     </div>
     <div class="form-group"><label class="form-label">FOLHA DE PAGAMENTO MENSAL (R$)</label><input class="form-input" type="number" id="onb-payroll" placeholder="0"></div>
-    <button class="btn-primary" id="btn-onb" onclick="saveCompany()">Começar a usar o Simplus</button>
+    <button class="btn-primary" id="btn-onb" onclick="saveCompany()">Começar a usar o Conta Fácil</button>
     <div id="onb-msg" class="auth-msg" style="display:none;margin-top:12px"></div>
   </div>
 </div>
@@ -273,7 +274,7 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
     <button class="topbar-menu-btn" onclick="toggleSidebar()">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
-    <div class="topbar-logo">Simplus</div>
+    <div class="topbar-logo">Conta Fácil</div>
     <div class="topbar-company">
       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
       <span id="company-label">Carregando...</span>
@@ -779,6 +780,16 @@ html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--b
 
 <div class="toast" id="toast"></div>
 <script>
+function togglePass(inputId, btn) {
+  const input = document.getElementById(inputId);
+  const isHidden = input.type === 'password';
+  input.type = isHidden ? 'text' : 'password';
+  btn.innerHTML = isHidden
+    ? '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>'
+    : '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+  btn.style.color = isHidden ? 'var(--accent)' : 'var(--text3)';
+}
+
 const SUPA_URL='https://fqemuntgkgqiiejwdzjt.supabase.co';
 const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxZW11bnRna2dxaWllandkemp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxOTI5MTIsImV4cCI6MjA5NTc2ODkxMn0.FT1PEA8i0pUzVCXvJ71fx8vNyJi6f51uQAOrMxjjazA';
 const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
@@ -789,9 +800,51 @@ let insumos=[{nome:'Pão brioche',qty:1,unit:'un',preco:2.50},{nome:'Carne bovin
 const fmt=(v,d=2)=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtN=(v,d=2)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
 const fmtP=(v,d=1)=>fmtN(v,d)+'%';
-const gv=id=>parseFloat(document.getElementById(id)?.value)||0;
 const el=id=>document.getElementById(id);
 const setTxt=(id,v)=>{const e=el(id);if(e)e.textContent=v};
+
+// Mascara BRL
+function parseBRL(v){
+  if(typeof v==='number')return v;
+  return parseFloat(String(v).replace(/\./g,'').replace(',','.'))||0;
+}
+function applyBRLMask(inp){
+  const digits=inp.value.replace(/\D/g,'');
+  if(!digits){inp.value='';return;}
+  const cents=parseInt(digits,10);
+  inp.value=(cents/100).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function initBRLInputs(){
+  document.querySelectorAll('.input-pre').forEach(pre=>{
+    if(pre.textContent.trim()==='R$'){
+      const inp=pre.parentElement.querySelector('input');
+      if(inp&&inp.type==='number'){
+        const raw=parseFloat(inp.value)||0;
+        inp.type='text';
+        inp.inputMode='decimal';
+        inp.classList.add('brl-input');
+        inp.value=raw.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+        inp.addEventListener('input',()=>applyBRLMask(inp));
+      }
+    }
+  });
+  // Onboarding
+  ['onb-revenue','onb-payroll'].forEach(id=>{
+    const inp=el(id);
+    if(inp&&inp.type==='number'){
+      const raw=parseFloat(inp.value)||0;
+      inp.type='text';inp.inputMode='decimal';inp.classList.add('brl-input');
+      if(raw)inp.value=raw.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+      inp.addEventListener('input',()=>applyBRLMask(inp));
+    }
+  });
+}
+const gv=id=>{
+  const inp=document.getElementById(id);
+  if(!inp)return 0;
+  if(inp.classList.contains('brl-input'))return parseBRL(inp.value);
+  return parseFloat(inp.value)||0;
+};
 
 function showToast(msg,dur=2500){const t=el('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
 
@@ -820,9 +873,14 @@ async function doLogin(){
   const email=el('login-email').value.trim(),pass=el('login-pass').value;
   if(!email||!pass){showAuthMsg('Preencha e-mail e senha.','err');return;}
   el('btn-login').disabled=true;el('btn-login').textContent='Entrando...';
-  const {error}=await sb.auth.signInWithPassword({email,password:pass});
-  el('btn-login').disabled=false;el('btn-login').textContent='Entrar';
-  if(error)showAuthMsg(error.message,'err');
+  try{
+    const {error}=await sb.auth.signInWithPassword({email,password:pass});
+    if(error)showAuthMsg(error.message==='Invalid login credentials'?'E-mail ou senha incorretos.':error.message,'err');
+  }catch(e){
+    showAuthMsg('Erro de conexão. Tente novamente.','err');
+  }finally{
+    el('btn-login').disabled=false;el('btn-login').textContent='Entrar';
+  }
 }
 async function doSignup(){
   const name=el('signup-name').value.trim(),email=el('signup-email').value.trim(),pass=el('signup-pass').value;
@@ -839,16 +897,21 @@ function showAuthMsg(msg,type){const m=el('auth-msg');m.textContent=msg;m.classN
 // COMPANY
 async function loadCompany(){
   if(!currentUser)return;
-  const {data}=await sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).single();
-  if(data){currentCompany=data;setTxt('company-label',data.name);showApp();}
-  else showOnboarding();
+  try{
+    const {data,error}=await sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).maybeSingle();
+    if(data){currentCompany=data;setTxt('company-label',data.name);showApp();}
+    else showOnboarding();
+  }catch(e){
+    showAuthMsg('Erro ao carregar empresa. Tente novamente.','err');
+    el('auth-screen').style.display='flex';
+  }
 }
 async function saveCompany(){
   const name=el('onb-name').value.trim();
   if(!name){showOnbMsg('Nome obrigatório.','err');return;}
   el('btn-onb').disabled=true;el('btn-onb').textContent='Salvando...';
-  const {data,error}=await sb.from('companies').insert({owner_id:currentUser.id,name,cnpj:el('onb-cnpj').value.trim()||null,sector:el('onb-sector').value,tax_regime:el('onb-regime').value,annual_revenue:parseFloat(el('onb-revenue').value)||0,monthly_payroll:parseFloat(el('onb-payroll').value)||0}).select().single();
-  el('btn-onb').disabled=false;el('btn-onb').textContent='Começar a usar o Simplus';
+  const {data,error}=await sb.from('companies').insert({owner_id:currentUser.id,name,cnpj:el('onb-cnpj').value.trim()||null,sector:el('onb-sector').value,tax_regime:el('onb-regime').value,annual_revenue:parseBRL(el('onb-revenue').value),monthly_payroll:parseBRL(el('onb-payroll').value)}).select().single();
+  el('btn-onb').disabled=false;el('btn-onb').textContent='Começar a usar o Conta Fácil';
   if(error){showOnbMsg('Erro: '+error.message,'err');return;}
   currentCompany=data;setTxt('company-label',data.name);showApp();
 }
@@ -857,9 +920,9 @@ function showOnbMsg(msg,type){const m=el('onb-msg');m.textContent=msg;m.classNam
 // SCREENS
 function showApp(){
   el('auth-screen').style.display='none';el('onboarding-screen').style.display='none';
-  el('app').classList.add('visible');initAllModules();
+  el('app').classList.add('visible');initAllModules();setTimeout(initBRLInputs,0);
 }
-function showOnboarding(){el('auth-screen').style.display='none';el('onboarding-screen').style.display='flex';}
+function showOnboarding(){el('auth-screen').style.display='none';el('onboarding-screen').style.display='flex';setTimeout(initBRLInputs,0);}
 
 // NAVIGATION
 function navigate(navEl){

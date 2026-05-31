@@ -869,15 +869,18 @@ function switchAuthTab(tab,el_){
   el('auth-login').style.display=tab==='login'?'block':'none';el('auth-signup').style.display=tab==='signup'?'block':'none';
   el('auth-msg').style.display='none';
 }
+function withTimeout(promise, ms){
+  return Promise.race([promise, new Promise((_,rej)=>setTimeout(()=>rej(new Error('timeout')),ms))]);
+}
 async function doLogin(){
   const email=el('login-email').value.trim(),pass=el('login-pass').value;
   if(!email||!pass){showAuthMsg('Preencha e-mail e senha.','err');return;}
   el('btn-login').disabled=true;el('btn-login').textContent='Entrando...';
   try{
-    const {error}=await sb.auth.signInWithPassword({email,password:pass});
+    const {error}=await withTimeout(sb.auth.signInWithPassword({email,password:pass}),10000);
     if(error)showAuthMsg(error.message==='Invalid login credentials'?'E-mail ou senha incorretos.':error.message,'err');
   }catch(e){
-    showAuthMsg('Erro de conexão. Tente novamente.','err');
+    showAuthMsg(e.message==='timeout'?'Servidor demorou muito. Tente novamente.':'Erro de conexão. Tente novamente.','err');
   }finally{
     el('btn-login').disabled=false;el('btn-login').textContent='Entrar';
   }
@@ -898,11 +901,11 @@ function showAuthMsg(msg,type){const m=el('auth-msg');m.textContent=msg;m.classN
 async function loadCompany(){
   if(!currentUser)return;
   try{
-    const {data,error}=await sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).maybeSingle();
+    const {data,error}=await withTimeout(sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).maybeSingle(),10000);
     if(data){currentCompany=data;setTxt('company-label',data.name);showApp();}
     else showOnboarding();
   }catch(e){
-    showAuthMsg('Erro ao carregar empresa. Tente novamente.','err');
+    showAuthMsg(e.message==='timeout'?'Servidor demorou muito. Tente novamente.':'Erro ao carregar dados. Tente novamente.','err');
     el('auth-screen').style.display='flex';
   }
 }

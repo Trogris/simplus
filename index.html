@@ -957,8 +957,9 @@ function initAllModules(){
     const aliq={simples:6,presumido:11.33,real:9.25};const r=currentCompany.tax_regime;
     ['s_imp','p_imp','d_imp'].forEach(id=>{if(el(id))el(id).value=aliq[r]||6;});
     const fat=currentCompany.annual_revenue||0,pay=currentCompany.monthly_payroll||0,sec=currentCompany.sector||'comercio';
-    if(fat>0){['cr_fat','tr_fat'].forEach(id=>{if(el(id))el(id).value=fat;});}
-    if(pay>0){['cr_folha','tr_folha'].forEach(id=>{if(el(id))el(id).value=pay;});}
+    const fmtBRL=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+    if(fat>0){['cr_fat','tr_fat'].forEach(id=>{if(el(id)){el(id).value=fmtBRL(fat);el(id).classList.add('brl-input');}});}
+    if(pay>0){['cr_folha','tr_folha'].forEach(id=>{if(el(id)){el(id).value=fmtBRL(pay);el(id).classList.add('brl-input');}});}
     ['cr_setor','tr_setor'].forEach(id=>{if(el(id))el(id).value=sec;});
     calcRegimes();calcTransicao();
   }
@@ -1016,7 +1017,12 @@ function calcFicha(){
   setTxt('ft_cmv',fmt(total/rend));return total/rend;
 }
 function usarCMV(){
-  const cmv=calcFicha();if(el('p_ins')){el('p_ins').value=cmv.toFixed(4);calcProduto();}
+  const cmv=calcFicha();
+  if(el('p_ins')){
+    const inp=el('p_ins');
+    inp.value=cmv.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
+    calcProduto();
+  }
   navigate(document.querySelector('.nav-item[data-module="pricing-product"]'));showToast('CMV aplicado na precificação.');
 }
 async function saveFicha(){
@@ -1097,7 +1103,7 @@ function openCashModal(){el('cf-modal').classList.add('open');}
 function closeCashModal(){el('cf-modal').classList.remove('open');}
 async function saveCashEntry(){
   if(!currentCompany){showToast('Nenhuma empresa selecionada.');return;}
-  const desc=el('cf_desc').value.trim(),tipo=el('cf_tipo').value,cat=el('cf_cat').value.trim(),valor=parseFloat(el('cf_valor').value)||0,data=el('cf_data').value;
+  const desc=el('cf_desc').value.trim(),tipo=el('cf_tipo').value,cat=el('cf_cat').value.trim(),valor=parseBRL(el('cf_valor').value),data=el('cf_data').value;
   if(!desc||!valor||!data){showToast('Preencha todos os campos.');return;}
   const {error}=await sb.from('cash_flow_entries').insert({company_id:currentCompany.id,type:tipo,category:cat||null,description:desc,amount:valor,date:data});
   if(error){showToast('Erro: '+error.message);return;}

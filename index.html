@@ -877,9 +877,12 @@ async function doLogin(){
   if(!email||!pass){showAuthMsg('Preencha e-mail e senha.','err');return;}
   el('btn-login').disabled=true;el('btn-login').textContent='Entrando...';
   try{
-    const {error}=await withTimeout(sb.auth.signInWithPassword({email,password:pass}),10000);
+    console.log('[LOGIN] Tentando autenticar...');
+    const {data,error}=await withTimeout(sb.auth.signInWithPassword({email,password:pass}),10000);
+    console.log('[LOGIN] Resposta:', {data, error});
     if(error)showAuthMsg(error.message==='Invalid login credentials'?'E-mail ou senha incorretos.':error.message,'err');
   }catch(e){
+    console.error('[LOGIN] Erro:', e);
     showAuthMsg(e.message==='timeout'?'Servidor demorou muito. Tente novamente.':'Erro de conexão. Tente novamente.','err');
   }finally{
     el('btn-login').disabled=false;el('btn-login').textContent='Entrar';
@@ -901,10 +904,13 @@ function showAuthMsg(msg,type){const m=el('auth-msg');m.textContent=msg;m.classN
 async function loadCompany(){
   if(!currentUser)return;
   try{
+    console.log('[COMPANY] Buscando empresa do usuário:', currentUser.id);
     const {data,error}=await withTimeout(sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).maybeSingle(),10000);
+    console.log('[COMPANY] Resposta:', {data, error});
     if(data){currentCompany=data;setTxt('company-label',data.name);showApp();}
     else showOnboarding();
   }catch(e){
+    console.error('[COMPANY] Erro:', e);
     showAuthMsg(e.message==='timeout'?'Servidor demorou muito. Tente novamente.':'Erro ao carregar dados. Tente novamente.','err');
     el('auth-screen').style.display='flex';
   }
@@ -1294,6 +1300,7 @@ function calcCLTPJ(){
 
 // AUTH LISTENER
 sb.auth.onAuthStateChange(async(event,session)=>{
+  console.log('[AUTH] Evento:', event, '| Usuário:', session?.user?.email||'nenhum');
   if(session?.user){currentUser=session.user;await loadCompany();}
   else{currentUser=null;currentCompany=null;el('app').classList.remove('visible');el('auth-screen').style.display='flex';el('onboarding-screen').style.display='none';}
 });

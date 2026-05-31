@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Simplus — Gestão Financeira</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root {
+  --bg:#f5f5f7;--surface:#ffffff;--surface2:#f0f0f2;
+  --border:rgba(0,0,0,0.08);--border2:rgba(0,0,0,0.14);
+  --text:#1a1a1e;--text2:#6b6b78;--text3:#a0a0aa;
+  --accent:#2563eb;--accent-bg:#eff6ff;
+  --green:#16a34a;--green-bg:#f0fdf4;
+  --red:#dc2626;--red-bg:#fef2f2;
+  --amber:#d97706;--amber-bg:#fffbeb;
+  --radius-sm:6px;--radius:10px;--radius-lg:14px;
+  --mono:'JetBrains Mono',monospace;--sans:'Inter',sans-serif;
+  --sidebar-w:220px;--topbar-h:52px;--bottom-h:60px;
+  --shadow:0 1px 3px rgba(0,0,0,0.08),0 1px 2px rgba(0,0,0,0.04);
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#0f0f12;--surface:#1a1a20;--surface2:#22222a;
+    --border:rgba(255,255,255,0.07);--border2:rgba(255,255,255,0.12);
+    --text:#e8e8f0;--text2:#888898;--text3:#4a4a5a;
+    --accent:#3b82f6;--accent-bg:#1e3a5f;
+    --green:#22c55e;--green-bg:#052e16;
+    --red:#f87171;--red-bg:#2d0707;
+    --amber:#fbbf24;--amber-bg:#2d1d00;
+    --shadow:0 1px 3px rgba(0,0,0,0.3);
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden;font-family:var(--sans);background:var(--bg);color:var(--text);font-size:14px}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:2px}
+
+/* AUTH */
+#auth-screen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.auth-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 32px;width:100%;max-width:380px;box-shadow:var(--shadow)}
+.auth-logo{font-size:22px;font-weight:600;color:var(--accent);margin-bottom:6px;letter-spacing:-0.3px}
+.auth-sub{font-size:13px;color:var(--text2);margin-bottom:28px}
+.auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px}
+.auth-tab{flex:1;padding:8px;text-align:center;font-size:13px;font-weight:500;cursor:pointer;color:var(--text2);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .15s}
+.auth-tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.form-group{margin-bottom:14px}
+.form-label{font-size:11px;font-weight:500;color:var(--text2);margin-bottom:5px;display:block;letter-spacing:0.04em}
+.form-input{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:14px;outline:none;transition:border-color .15s}
+.form-input:focus{border-color:var(--accent)}
+.btn-primary{width:100%;padding:11px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius-sm);font-family:var(--sans);font-size:14px;font-weight:500;cursor:pointer;transition:opacity .15s;margin-top:4px}
+.btn-primary:hover{opacity:.9}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.auth-msg{font-size:12px;text-align:center;margin-top:12px;padding:8px;border-radius:var(--radius-sm)}
+.auth-msg.err{background:var(--red-bg);color:var(--red)}
+.auth-msg.ok{background:var(--green-bg);color:var(--green)}
+
+/* ONBOARDING */
+#onboarding-screen{position:fixed;inset:0;z-index:900;display:none;align-items:center;justify-content:center;background:var(--bg);padding:20px}
+.onb-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:36px 32px;width:100%;max-width:440px;box-shadow:var(--shadow)}
+.onb-step{font-size:11px;color:var(--text3);margin-bottom:4px}
+.onb-title{font-size:20px;font-weight:600;margin-bottom:6px}
+.onb-desc{font-size:13px;color:var(--text2);margin-bottom:24px;line-height:1.5}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.form-select{width:100%;padding:10px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:14px;outline:none;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23888' stroke-width='2'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;padding-right:30px}
+
+/* APP SHELL */
+#app{display:none;height:100vh;flex-direction:column}
+#app.visible{display:flex}
+
+/* TOPBAR */
+.topbar{height:var(--topbar-h);flex-shrink:0;display:flex;align-items:center;padding:0 16px;gap:12px;background:var(--surface);border-bottom:1px solid var(--border);position:relative;z-index:50}
+.topbar-logo{font-size:16px;font-weight:600;color:var(--accent);letter-spacing:-0.3px}
+.topbar-company{font-size:12px;color:var(--text2);background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);padding:4px 10px;cursor:pointer;display:flex;align-items:center;gap:5px}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.topbar-avatar{width:30px;height:30px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;cursor:pointer;border:1px solid var(--border)}
+.topbar-menu-btn{display:none;background:none;border:none;cursor:pointer;padding:6px;color:var(--text2)}
+@media(max-width:767px){.topbar-menu-btn{display:flex;align-items:center}}
+
+.app-body{flex:1;display:flex;overflow:hidden}
+
+/* SIDEBAR */
+.sidebar{width:var(--sidebar-w);flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);overflow-y:auto;padding:12px 8px;display:flex;flex-direction:column;gap:2px}
+.nav-section-label{font-size:10px;font-weight:500;letter-spacing:0.08em;color:var(--text3);padding:10px 10px 4px}
+.nav-item{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:400;color:var(--text2);border:1px solid transparent;transition:all .12s;user-select:none}
+.nav-item svg{width:16px;height:16px;flex-shrink:0;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.nav-item:hover{background:var(--surface2);color:var(--text)}
+.nav-item.active{background:var(--accent-bg);color:var(--accent);border-color:rgba(37,99,235,0.15);font-weight:500}
+.nav-divider{height:1px;background:var(--border);margin:6px 8px}
+.nav-badge{margin-left:auto;font-size:9px;font-family:var(--mono);padding:1px 5px;border-radius:3px;background:var(--green-bg);color:var(--green)}
+@media(max-width:767px){
+  .sidebar{position:fixed;left:0;top:var(--topbar-h);bottom:0;z-index:200;transform:translateX(-100%);transition:transform .2s ease;width:240px;box-shadow:4px 0 20px rgba(0,0,0,0.15)}
+  .sidebar.open{transform:translateX(0)}
+  .sidebar-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:199}
+  .sidebar-overlay.open{display:block}
+}
+
+/* MAIN */
+.main{flex:1;overflow-y:auto;display:flex;flex-direction:column}
+.module{display:none;flex:1;flex-direction:column}
+.module.active{display:flex}
+.module-header{padding:20px 24px 16px;border-bottom:1px solid var(--border);background:var(--surface);flex-shrink:0}
+.module-title{font-size:18px;font-weight:600;letter-spacing:-0.3px}
+.module-desc{font-size:12px;color:var(--text2);margin-top:3px}
+.module-body{padding:20px 24px;flex:1;overflow-y:auto}
+@media(max-width:600px){.module-header{padding:16px 16px 12px}.module-body{padding:16px}}
+
+/* COMPONENTS */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-lg);padding:20px;margin-bottom:14px}
+.card-title{font-size:11px;font-weight:500;letter-spacing:0.06em;color:var(--text3);margin-bottom:14px;display:flex;align-items:center;gap:6px}
+.card-title svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.grid-4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+@media(max-width:700px){.grid-2,.grid-3,.grid-4{grid-template-columns:1fr}}
+@media(min-width:701px) and (max-width:900px){.grid-3,.grid-4{grid-template-columns:1fr 1fr}}
+.field{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+.field:last-child{margin-bottom:0}
+.field label{font-size:11px;font-weight:500;color:var(--text2);letter-spacing:0.04em}
+.field input,.field select{padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;transition:border-color .12s;width:100%}
+.field input:focus,.field select:focus{border-color:var(--accent)}
+.field input[type=number]{font-family:var(--mono)}
+.input-wrap{position:relative}
+.input-pre{position:absolute;left:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);font-family:var(--mono);pointer-events:none}
+.input-suf{position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:11px;color:var(--text3);font-family:var(--mono);pointer-events:none}
+.has-pre{padding-left:26px!important}
+.has-suf{padding-right:26px!important}
+.field input[type=number]::-webkit-inner-spin-button{opacity:.3}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 16px;border-radius:var(--radius-sm);font-family:var(--sans);font-size:13px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .12s;white-space:nowrap}
+.btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.btn-accent{background:var(--accent);color:#fff}
+.btn-accent:hover{opacity:.9}
+.btn-ghost{background:transparent;border-color:var(--border2);color:var(--text2)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+.btn-sm{padding:6px 12px;font-size:12px}
+.stat-card{background:var(--surface2);border-radius:var(--radius);padding:14px;text-align:center}
+.stat-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em;margin-bottom:6px}
+.stat-value{font-family:var(--mono);font-size:20px;font-weight:500}
+.stat-value.green{color:var(--green)}.stat-value.red{color:var(--red)}.stat-value.amber{color:var(--amber)}.stat-value.accent{color:var(--accent)}
+.result-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid var(--border);font-size:13px}
+.result-row:last-child{border-bottom:none}
+.result-name{color:var(--text2)}
+.result-val{font-family:var(--mono);font-weight:500}
+.result-val.red{color:var(--red)}.result-val.green{color:var(--green)}.result-val.amber{color:var(--amber)}.result-val.accent{color:var(--accent)}
+.result-pct{font-size:10px;color:var(--text3);margin-left:6px}
+.result-hero{text-align:center;padding:20px;border-bottom:1px solid var(--border);margin-bottom:16px}
+.result-hero-label{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;margin-bottom:6px}
+.result-hero-value{font-family:var(--mono);font-size:36px;font-weight:500;color:var(--accent)}
+.result-hero-sub{font-size:11px;color:var(--text2);margin-top:4px;font-family:var(--mono)}
+.alert{display:flex;gap:10px;padding:11px 14px;border-radius:var(--radius);margin-bottom:10px;font-size:12px;line-height:1.5}
+.alert svg{width:15px;height:15px;flex-shrink:0;margin-top:1px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.alert.warn{background:var(--red-bg);color:var(--red);border:1px solid rgba(220,38,38,0.2)}
+.alert.ok{background:var(--green-bg);color:var(--green);border:1px solid rgba(22,163,74,0.2)}
+.alert.info{background:var(--accent-bg);color:var(--accent);border:1px solid rgba(37,99,235,0.2)}
+.alert.amber{background:var(--amber-bg);color:var(--amber);border:1px solid rgba(217,119,6,0.2)}
+.section-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.section-head-title{font-size:13px;font-weight:600}
+.data-table{width:100%;border-collapse:collapse;font-size:13px}
+.data-table th{font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;padding:6px 12px;border-bottom:1px solid var(--border);text-align:left}
+.data-table td{padding:10px 12px;border-bottom:1px solid var(--border);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:none}
+.data-table tr:hover td{background:var(--surface2)}
+.badge{display:inline-block;font-size:10px;font-weight:500;padding:2px 7px;border-radius:4px}
+.badge-green{background:var(--green-bg);color:var(--green)}
+.badge-red{background:var(--red-bg);color:var(--red)}
+.badge-amber{background:var(--amber-bg);color:var(--amber)}
+.badge-blue{background:var(--accent-bg);color:var(--accent)}
+.empty-state{text-align:center;padding:48px 24px;color:var(--text3)}
+.empty-state svg{width:40px;height:40px;margin:0 auto 12px;stroke:var(--text3);fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;display:block}
+.empty-state p{font-size:13px;color:var(--text2);margin-top:6px}
+.loading{display:flex;align-items:center;justify-content:center;gap:8px;padding:24px;color:var(--text2);font-size:13px}
+.spinner{width:16px;height:16px;border:2px solid var(--border2);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:10px 18px;border-radius:var(--radius);font-size:13px;font-weight:500;z-index:1000;opacity:0;transition:opacity .2s;white-space:nowrap;pointer-events:none}
+.toast.show{opacity:1}
+@media(min-width:768px){.toast{bottom:20px}}
+.bottom-nav{display:none;height:var(--bottom-h);flex-shrink:0;background:var(--surface);border-top:1px solid var(--border);position:relative;z-index:50}
+@media(max-width:767px){.bottom-nav{display:flex}.sidebar{display:block}}
+.bottom-nav-items{display:flex;width:100%}
+.bottom-nav-item{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;padding:6px 4px;color:var(--text3);font-size:10px;font-weight:500;transition:color .12s}
+.bottom-nav-item svg{width:20px;height:20px;stroke:currentColor;fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.bottom-nav-item.active{color:var(--accent)}
+.prova-track{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;display:flex;margin:10px 0 6px}
+.prova-seg{height:100%;transition:width .4s}
+.prova-legend{display:flex;flex-wrap:wrap;gap:8px 14px}
+.prova-item{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2)}
+.prova-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.trans-table{width:100%;border-collapse:collapse;font-size:12px}
+.trans-table th{font-size:9px;font-weight:500;color:var(--text3);letter-spacing:0.07em;padding:8px 10px;border-bottom:1px solid var(--border);text-align:right;white-space:nowrap}
+.trans-table th:first-child{text-align:left}
+.trans-table td{padding:8px 10px;border-bottom:1px solid var(--border);font-family:var(--mono);text-align:right;white-space:nowrap}
+.trans-table td:first-child{text-align:left;font-family:var(--sans);font-weight:500}
+.trans-table tr:last-child td{border-bottom:none}
+.trans-table tr:hover td{background:var(--surface2)}
+.comp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:14px}
+@media(max-width:600px){.comp-grid{grid-template-columns:1fr}}
+.product-item{display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface2);border-radius:var(--radius);margin-bottom:8px;cursor:pointer;border:1px solid transparent;transition:border-color .12s}
+.product-item:hover{border-color:var(--border2)}
+.product-name{font-size:13px;font-weight:500}
+.product-sub{font-size:11px;color:var(--text2);margin-top:1px}
+.product-price{font-family:var(--mono);font-size:13px;font-weight:500;color:var(--accent);margin-left:auto}
+.cred-grid-header{display:grid;grid-template-columns:1fr 100px 100px 100px;gap:8px;padding:4px 0}
+.cred-grid-row{display:grid;grid-template-columns:1fr 100px 100px 100px;gap:8px;margin-bottom:6px;align-items:center}
+@media(max-width:600px){.cred-grid-header,.cred-grid-row{grid-template-columns:1fr 80px 80px}.cred-grid-header span:last-child,.cred-grid-row>*:last-child{display:none}}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.5);z-index:500;display:none;align-items:center;justify-content:center;padding:20px}
+.modal-overlay.open{display:flex}
+.modal{background:var(--surface);border-radius:var(--radius-lg);padding:24px;width:100%;max-width:440px;max-height:90vh;overflow-y:auto;border:1px solid var(--border);box-shadow:0 20px 60px rgba(0,0,0,0.3)}
+.modal-title{font-size:16px;font-weight:600;margin-bottom:16px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+</style>
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div class="auth-card">
+    <div class="auth-logo">Simplus</div>
+    <div class="auth-sub">Gestão financeira para pequenas e médias empresas</div>
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login',this)">Entrar</div>
+      <div class="auth-tab" onclick="switchAuthTab('signup',this)">Criar conta</div>
+    </div>
+    <div id="auth-login">
+      <div class="form-group"><label class="form-label">E-MAIL</label><input class="form-input" type="email" id="login-email" placeholder="seu@email.com" autocomplete="email"></div>
+      <div class="form-group"><label class="form-label">SENHA</label><input class="form-input" type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password"></div>
+      <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar</button>
+    </div>
+    <div id="auth-signup" style="display:none">
+      <div class="form-group"><label class="form-label">NOME COMPLETO</label><input class="form-input" type="text" id="signup-name" placeholder="Seu nome"></div>
+      <div class="form-group"><label class="form-label">E-MAIL</label><input class="form-input" type="email" id="signup-email" placeholder="seu@email.com"></div>
+      <div class="form-group"><label class="form-label">SENHA</label><input class="form-input" type="password" id="signup-pass" placeholder="Mínimo 6 caracteres"></div>
+      <button class="btn-primary" id="btn-signup" onclick="doSignup()">Criar conta</button>
+    </div>
+    <div id="auth-msg" class="auth-msg" style="display:none"></div>
+  </div>
+</div>
+
+<div id="onboarding-screen">
+  <div class="onb-card">
+    <div class="onb-step">PRIMEIRA VEZ</div>
+    <div class="onb-title">Configure sua empresa</div>
+    <div class="onb-desc">Essas informações pré-preenchem todos os módulos automaticamente.</div>
+    <div class="form-group"><label class="form-label">NOME DA EMPRESA *</label><input class="form-input" type="text" id="onb-name" placeholder="Ex: Padaria Silva LTDA"></div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">CNPJ</label><input class="form-input" type="text" id="onb-cnpj" placeholder="00.000.000/0001-00"></div>
+      <div class="form-group"><label class="form-label">SETOR *</label>
+        <select class="form-select" id="onb-sector">
+          <option value="comercio">Comércio</option><option value="servicos">Serviços</option>
+          <option value="industria">Indústria</option><option value="alimentacao">Alimentação</option>
+          <option value="ti">Tecnologia</option><option value="saude">Saúde</option><option value="construcao">Construção</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><label class="form-label">REGIME TRIBUTÁRIO *</label>
+        <select class="form-select" id="onb-regime">
+          <option value="simples">Simples Nacional</option><option value="presumido">Lucro Presumido</option><option value="real">Lucro Real</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">FATURAMENTO ANUAL (R$)</label><input class="form-input" type="number" id="onb-revenue" placeholder="0"></div>
+    </div>
+    <div class="form-group"><label class="form-label">FOLHA DE PAGAMENTO MENSAL (R$)</label><input class="form-input" type="number" id="onb-payroll" placeholder="0"></div>
+    <button class="btn-primary" id="btn-onb" onclick="saveCompany()">Começar a usar o Simplus</button>
+    <div id="onb-msg" class="auth-msg" style="display:none;margin-top:12px"></div>
+  </div>
+</div>
+
+<div id="app">
+  <header class="topbar">
+    <button class="topbar-menu-btn" onclick="toggleSidebar()">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+    </button>
+    <div class="topbar-logo">Simplus</div>
+    <div class="topbar-company">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/></svg>
+      <span id="company-label">Carregando...</span>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-avatar" id="user-avatar" onclick="doLogout()" title="Sair">?</div>
+    </div>
+  </header>
+
+  <div class="app-body">
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+    <nav class="sidebar" id="sidebar">
+      <div class="nav-section-label">PRECIFICAÇÃO</div>
+      <div class="nav-item active" data-module="pricing-service" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>Serviços
+      </div>
+      <div class="nav-item" data-module="pricing-product" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>Produtos
+      </div>
+      <div class="nav-item" data-module="ficha-tecnica" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>Ficha técnica<span class="nav-badge">AUTO</span>
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">FINANCEIRO</div>
+      <div class="nav-item" data-module="dre" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>DRE
+      </div>
+      <div class="nav-item" data-module="breakeven" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>Break-even
+      </div>
+      <div class="nav-item" data-module="cashflow" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>Fluxo de caixa
+      </div>
+      <div class="nav-item" data-module="fidelizacao" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z"/></svg>Fidelização
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">TRIBUTÁRIO</div>
+      <div class="nav-item" data-module="tax-regime" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Comparativo regimes
+      </div>
+      <div class="nav-item" data-module="ibs-cbs" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>IBS/CBS
+      </div>
+      <div class="nav-item" data-module="tax-credits" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="16"/><line x1="8" y1="12" x2="16" y2="12"/></svg>Créditos tributários
+      </div>
+      <div class="nav-item" data-module="tax-transition" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/></svg>Transição 2026-2033
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">INVESTIMENTO</div>
+      <div class="nav-item" data-module="investment" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Payback / ROSE
+      </div>
+      <div class="nav-divider"></div>
+      <div class="nav-section-label">RH E FOLHA</div>
+      <div class="nav-item" data-module="payroll-cost" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>Custo do colaborador
+      </div>
+      <div class="nav-item" data-module="clt-pj" onclick="navigate(this)">
+        <svg viewBox="0 0 24 24"><rect x="2" y="7" width="20" height="14" rx="2"/><path d="M16 21V5a2 2 0 00-2-2h-4a2 2 0 00-2 2v16"/></svg>CLT vs PJ vs MEI
+      </div>
+    </nav>
+
+    <main class="main" id="main-content">
+
+      <!-- PRECIFICACAO SERVICOS -->
+      <div class="module active" id="mod-pricing-service">
+        <div class="module-header"><div class="module-title">Precificação de Serviços</div><div class="module-desc">Calcule o preço ideal cobrindo todos os custos e garantindo sua margem de lucro.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>CUSTOS DO SERVIÇO (CSV)</div>
+                <div class="field"><label>MÃO DE OBRA DIRETA (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="s_mao" class="has-pre" value="150" min="0" step="10" oninput="calcServico()"></div></div>
+                <div class="field"><label>CUSTOS DE PRODUÇÃO / LOGÍSTICA (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="s_prod" class="has-pre" value="80" min="0" step="10" oninput="calcServico()"></div></div>
+                <div class="field"><label>OUTROS CUSTOS DIRETOS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="s_outros" class="has-pre" value="20" min="0" step="5" oninput="calcServico()"></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg>DESPESAS E PARÂMETROS</div>
+                <div class="field"><label>DESPESAS FIXAS MENSAIS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="s_fixas" class="has-pre" value="4000" min="0" step="100" oninput="calcServico()"></div></div>
+                <div class="field"><label>MÉDIA DE EVENTOS / ATENDIMENTOS POR MÊS</label><input type="number" id="s_eventos" value="20" min="1" step="1" oninput="calcServico()"></div>
+                <div class="field"><label>IMPOSTOS (% sobre o preço de venda)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="s_imp" class="has-suf" value="6" min="0" max="50" step="0.5" oninput="calcServico()"></div></div>
+                <div class="field"><label>MARGEM DE LUCRO DESEJADA (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="s_margem" class="has-suf" value="20" min="0" max="80" step="1" oninput="calcServico()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="result-hero"><div class="result-hero-label">PREÇO DE VENDA CALCULADO</div><div class="result-hero-value" id="s_pv">R$ 0,00</div><div class="result-hero-sub" id="s_markup">Markup: 0,00x</div></div>
+                <div class="grid-4" style="margin-bottom:16px">
+                  <div class="stat-card"><div class="stat-label">CSV TOTAL</div><div class="stat-value amber" id="s_csv">R$ 0</div></div>
+                  <div class="stat-card"><div class="stat-label">DESP/EVENTO</div><div class="stat-value accent" id="s_dfe">R$ 0</div></div>
+                  <div class="stat-card"><div class="stat-label">IMPOSTOS</div><div class="stat-value red" id="s_imp_val">R$ 0</div></div>
+                  <div class="stat-card"><div class="stat-label">LUCRO LÍQ.</div><div class="stat-value green" id="s_lucro">R$ 0</div></div>
+                </div>
+                <div style="margin-bottom:14px"><div style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.06em;margin-bottom:8px">COMPOSIÇÃO DO PREÇO</div><div class="prova-track" id="s_prova_track"></div><div class="prova-legend" id="s_prova_legend"></div></div>
+                <div id="s_alerts"></div>
+                <div style="margin-top:14px"><button class="btn btn-accent btn-sm" onclick="saveSimulation('pricing-service')"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Salvar simulação</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PRECIFICACAO PRODUTOS -->
+      <div class="module" id="mod-pricing-product">
+        <div class="module-header"><div class="module-title">Precificação de Produtos</div><div class="module-desc">CMV ajustado por perdas e markup completo. Ideal para alimentação, produção e varejo.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/></svg>CUSTO DOS INSUMOS</div>
+                <div class="field"><label>CUSTO UNITÁRIO DOS INSUMOS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="p_ins" class="has-pre" value="8.50" min="0" step="0.10" oninput="calcProduto()"></div></div>
+                <div class="field"><label>PERDA ESTIMADA (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="p_perda" class="has-suf" value="5" min="0" max="80" step="0.5" oninput="calcProduto()"></div></div>
+                <div class="field"><label>RENDIMENTO (PORÇÕES)</label><input type="number" id="p_rend" value="1" min="0.01" step="0.5" oninput="calcProduto()"></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 8v4l3 3"/></svg>COMPOSIÇÃO DO MARKUP</div>
+                <div class="field"><label>IMPOSTOS / TAXAS SOBRE A VENDA (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="p_imp" class="has-suf" value="8" min="0" max="50" step="0.5" oninput="calcProduto()"></div></div>
+                <div class="field"><label>DESPESAS FIXAS RATEADAS (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="p_fixas" class="has-suf" value="15" min="0" max="50" step="0.5" oninput="calcProduto()"></div></div>
+                <div class="field"><label>REINVESTIMENTO (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="p_reinv" class="has-suf" value="5" min="0" max="30" step="0.5" oninput="calcProduto()"></div></div>
+                <div class="field"><label>MARGEM DE LUCRO DESEJADA (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="p_margem" class="has-suf" value="20" min="0" max="80" step="1" oninput="calcProduto()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="result-hero"><div class="result-hero-label">PREÇO DE VENDA FINAL</div><div class="result-hero-value" id="p_pv">R$ 0,00</div><div class="result-hero-sub" id="p_sub">CMV Ajustado: R$ 0,00 · Markup: 0,00x</div></div>
+                <div id="p_rows" style="margin-bottom:16px"></div>
+                <div style="margin-bottom:14px"><div class="prova-track" id="p_track"></div><div class="prova-legend" id="p_legend"></div></div>
+                <div id="p_alerts"></div>
+                <div style="margin-top:14px"><button class="btn btn-accent btn-sm" onclick="saveSimulation('pricing-product')"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Salvar simulação</button></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FICHA TECNICA -->
+      <div class="module" id="mod-ficha-tecnica">
+        <div class="module-header"><div class="module-title">Ficha Técnica Automatizada</div><div class="module-desc">Cadastre insumos e o CMV é calculado e sincronizado com a precificação automaticamente.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>IDENTIFICAÇÃO</div>
+                <div class="field"><label>NOME DO PRODUTO / RECEITA *</label><input type="text" id="ft_nome" value="X-Burguer Artesanal" placeholder="Ex: Prato do dia..."></div>
+                <div class="field"><label>CATEGORIA</label><input type="text" id="ft_cat" placeholder="Ex: Lanches, Bebidas..."></div>
+                <div class="field"><label>RENDIMENTO (PORÇÕES)</label><input type="number" id="ft_rend" value="1" min="0.01" step="0.5" oninput="calcFicha()"></div>
+              </div>
+              <div class="card">
+                <div class="section-head"><div class="card-title" style="margin-bottom:0"><svg viewBox="0 0 24 24"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2"/></svg>INSUMOS</div><button class="btn btn-ghost btn-sm" onclick="addInsumo()">+ Adicionar</button></div>
+                <div style="margin-top:10px">
+                  <div style="display:grid;grid-template-columns:1fr 80px 90px 30px;gap:6px;padding:4px 0;margin-bottom:6px">
+                    <span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em">INSUMO</span>
+                    <span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em">QTD</span>
+                    <span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em">PRECO UNIT.</span>
+                    <span></span>
+                  </div>
+                  <div id="insumos-list"></div>
+                </div>
+                <div style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center">
+                  <span style="font-size:12px;color:var(--text2)">CMV por porção</span>
+                  <span style="font-family:var(--mono);font-size:16px;font-weight:500;color:var(--amber)" id="ft_cmv">R$ 0,00</span>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>PRODUTOS SALVOS</div>
+                <div id="ft-products-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+                <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+                  <button class="btn btn-accent btn-sm" onclick="saveFicha()"><svg viewBox="0 0 24 24" width="14" height="14"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/></svg>Salvar ficha</button>
+                  <button class="btn btn-ghost btn-sm" onclick="usarCMV()">Usar CMV na precificação</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRE -->
+      <div class="module" id="mod-dre">
+        <div class="module-header"><div class="module-title">Simulador DRE</div><div class="module-desc">Demonstração do Resultado do Exercício — da receita bruta ao lucro líquido.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>RECEITAS</div>
+                <div class="field"><label>RECEITA BRUTA (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_rb" class="has-pre" value="50000" step="1000" oninput="calcDRE()"></div></div>
+                <div class="field"><label>DEVOLUÇÕES / CANCELAMENTOS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_dev" class="has-pre" value="500" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>DESCONTOS CONCEDIDOS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_desc" class="has-pre" value="300" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>IMPOSTOS SOBRE VENDAS (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="d_imp" class="has-suf" value="6" min="0" max="50" step="0.5" oninput="calcDRE()"></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z"/></svg>CUSTOS E DESPESAS</div>
+                <div class="field"><label>CMV / CSV (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_cmv" class="has-pre" value="14000" step="500" oninput="calcDRE()"></div></div>
+                <div class="field"><label>DESPESAS COM PESSOAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_pessoal" class="has-pre" value="8000" step="500" oninput="calcDRE()"></div></div>
+                <div class="field"><label>DESPESAS ADMINISTRATIVAS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_admin" class="has-pre" value="3000" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>MARKETING / VENDAS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_mkt" class="has-pre" value="2000" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>DEPRECIAÇÃO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_dep" class="has-pre" value="1200" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>RESULTADO FINANCEIRO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="d_fin" class="has-pre" value="800" step="100" oninput="calcDRE()"></div></div>
+                <div class="field"><label>IR / CSLL (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="d_ir" class="has-suf" value="15" min="0" max="50" step="1" oninput="calcDRE()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card"><div class="card-title"><svg viewBox="0 0 24 24"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>DEMONSTRAÇÃO DO RESULTADO</div><div id="dre-table"></div><div id="dre-alerts" style="margin-top:14px"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- BREAK-EVEN -->
+      <div class="module" id="mod-breakeven">
+        <div class="module-header"><div class="module-title">Ponto de Equilíbrio</div><div class="module-desc">Descubra o faturamento mínimo e simule o impacto de novos custos fixos.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 000 7h5a3.5 3.5 0 010 7H6"/></svg>PARÂMETROS</div>
+                <div class="field"><label>DESPESAS FIXAS TOTAIS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="be_fixas" class="has-pre" value="12000" step="500" oninput="calcBE()"></div></div>
+                <div class="field"><label>MARGEM DE CONTRIBUIÇÃO (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="be_mc" class="has-suf" value="35" min="1" max="99" step="1" oninput="calcBE()"></div></div>
+                <div class="field"><label>TICKET MÉDIO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="be_ticket" class="has-pre" value="200" min="1" step="10" oninput="calcBE()"></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 015.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>SIMULADOR "E SE?"</div>
+                <div class="field"><label>NOVO CUSTO FIXO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="be_novo" class="has-pre" value="2500" step="100" oninput="calcBE()"></div></div>
+                <div style="margin-top:10px;padding:14px;background:var(--surface2);border-radius:var(--radius)">
+                  <div style="font-size:10px;color:var(--text3);margin-bottom:6px">FATURAMENTO EXTRA NECESSÁRIO</div>
+                  <div style="font-family:var(--mono);font-size:22px;font-weight:500;color:var(--accent)" id="be_esf">--</div>
+                  <div style="font-size:11px;color:var(--text2);margin-top:4px" id="be_esf_sub">Calcule para ver</div>
+                </div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="result-hero"><div class="result-hero-label">PONTO DE EQUILÍBRIO MENSAL</div><div class="result-hero-value" id="be_pe">R$ 0,00</div><div class="result-hero-sub" id="be_sub">0 vendas necessárias</div></div>
+                <div class="grid-3" style="margin-bottom:16px">
+                  <div class="stat-card"><div class="stat-label">MC / VENDA</div><div class="stat-value green" id="be_mcv">--</div></div>
+                  <div class="stat-card"><div class="stat-label">DIAS P/ ATINGIR</div><div class="stat-value amber" id="be_dias">--</div></div>
+                  <div class="stat-card"><div class="stat-label">MC (%)</div><div class="stat-value accent" id="be_mc_val">--</div></div>
+                </div>
+                <div id="be_alerts"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- FLUXO DE CAIXA -->
+      <div class="module" id="mod-cashflow">
+        <div class="module-header"><div class="module-title">Fluxo de Caixa</div><div class="module-desc">Registre entradas e saídas e visualize sua posição de caixa mês a mês.</div></div>
+        <div class="module-body">
+          <div class="section-head"><div class="section-head-title">Lançamentos do mês atual</div><button class="btn btn-accent btn-sm" onclick="openCashModal()">+ Novo lançamento</button></div>
+          <div class="grid-4" style="margin-bottom:16px">
+            <div class="stat-card"><div class="stat-label">ENTRADAS</div><div class="stat-value green" id="cf_entradas">R$ 0</div></div>
+            <div class="stat-card"><div class="stat-label">SAÍDAS</div><div class="stat-value red" id="cf_saidas">R$ 0</div></div>
+            <div class="stat-card"><div class="stat-label">SALDO LÍQUIDO</div><div class="stat-value" id="cf_saldo">R$ 0</div></div>
+            <div class="stat-card"><div class="stat-label">LANÇAMENTOS</div><div class="stat-value accent" id="cf_count">0</div></div>
+          </div>
+          <div class="card" style="padding:0;overflow:hidden"><div id="cf_list"><div class="empty-state"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><div style="font-size:15px;font-weight:500">Nenhum lançamento ainda</div><p>Clique em "Novo lançamento" para começar.</p></div></div></div>
+        </div>
+      </div>
+
+      <!-- FIDELIZACAO -->
+      <div class="module" id="mod-fidelizacao">
+        <div class="module-header"><div class="module-title">Calculadora de Fidelização</div><div class="module-desc">Descubra o impacto financeiro real de perder clientes fiéis.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>BASE DE CLIENTES</div>
+                <div class="field"><label>FATURAMENTO MENSAL ATUAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="fid_fat" class="has-pre" value="40000" step="1000" oninput="calcFid()"></div></div>
+                <div class="field"><label>TOTAL DE CLIENTES ATIVOS</label><input type="number" id="fid_cli" value="100" min="1" oninput="calcFid()"></div>
+                <div class="field"><label>CLIENTES FIÉIS RECORRENTES (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="fid_pct" class="has-suf" value="30" min="1" max="100" oninput="calcFid()"></div></div>
+                <div class="field"><label>MARGEM DE CONTRIBUIÇÃO (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="fid_mc" class="has-suf" value="40" min="1" max="99" oninput="calcFid()"></div></div>
+                <div class="field"><label>PERDA SIMULADA DE CLIENTES FIÉIS (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="fid_perda" class="has-suf" value="10" min="1" max="50" oninput="calcFid()"></div></div>
+                <div class="field"><label>CUSTO DE AQUISIÇÃO POR CLIENTE (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="fid_cac" class="has-pre" value="120" step="10" oninput="calcFid()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="result-hero"><div class="result-hero-label">IMPACTO DA PERDA SIMULADA</div><div class="result-hero-value" id="fid_impacto" style="color:var(--red)">R$ 0,00</div><div class="result-hero-sub" id="fid_sub">em faturamento perdido/mês</div></div>
+                <div class="grid-3" style="margin-bottom:14px">
+                  <div class="stat-card"><div class="stat-label">CLIENTES PERDIDOS</div><div class="stat-value red" id="fid_n">0</div></div>
+                  <div class="stat-card"><div class="stat-label">LUCRO PERDIDO</div><div class="stat-value red" id="fid_lucro">R$ 0</div></div>
+                  <div class="stat-card"><div class="stat-label">CUSTO REPOSIÇÃO</div><div class="stat-value amber" id="fid_repo">R$ 0</div></div>
+                </div>
+                <div id="fid_alerts"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COMPARATIVO REGIMES -->
+      <div class="module" id="mod-tax-regime">
+        <div class="module-header"><div class="module-title">Comparativo de Regimes</div><div class="module-desc">Lucro Real vs Lucro Presumido vs Simples Nacional — qual paga menos para a sua empresa?</div></div>
+        <div class="module-body">
+          <div class="card">
+            <div class="grid-3" style="margin-bottom:12px">
+              <div class="field"><label>FATURAMENTO ANUAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="cr_fat" class="has-pre" value="1500000" step="10000" oninput="calcRegimes()"></div></div>
+              <div class="field"><label>SETOR DE ATIVIDADE</label><select id="cr_setor" onchange="calcRegimes()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;appearance:none"><option value="comercio">Comércio</option><option value="servicos">Serviços</option><option value="industria">Indústria</option><option value="alimentacao">Alimentação</option><option value="ti">Tecnologia</option><option value="saude">Saúde</option><option value="construcao">Construção</option></select></div>
+              <div class="field"><label>MARGEM DE LUCRO REAL (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="cr_margem" class="has-suf" value="15" min="0" max="80" step="1" oninput="calcRegimes()"></div></div>
+            </div>
+            <div class="grid-2">
+              <div class="field"><label>FOLHA DE PAGAMENTO MENSAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="cr_folha" class="has-pre" value="25000" step="1000" oninput="calcRegimes()"></div></div>
+              <div class="field"><label>DESPESAS DEDUTÍVEIS ANUAIS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="cr_desp" class="has-pre" value="600000" step="10000" oninput="calcRegimes()"></div></div>
+            </div>
+          </div>
+          <div class="comp-grid" id="cr_grid"></div>
+          <div class="card" id="cr_analise" style="display:none"></div>
+        </div>
+      </div>
+
+      <!-- IBS/CBS -->
+      <div class="module" id="mod-ibs-cbs">
+        <div class="module-header"><div class="module-title">Calculadora IBS/CBS</div><div class="module-desc">IVA Dual da Reforma Tributária — LC 214/2025. Débito, crédito e valor efetivo a recolher.</div></div>
+        <div class="module-body">
+          <div style="background:var(--amber-bg);border:1px solid rgba(217,119,6,0.2);border-radius:var(--radius);padding:12px 16px;margin-bottom:16px;font-size:12px;color:var(--amber);line-height:1.5">IBS + CBS substituem PIS, COFINS, IPI, ICMS e ISS. Alíquota padrão estimada: 26,5%. Crédito amplo sobre todas as entradas. Implantação gradual 2026-2033 — LC 214/2025.</div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/></svg>DADOS DA OPERAÇÃO</div>
+              <div class="field"><label>VALOR DA OPERAÇÃO (sem impostos)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="ibs_val" class="has-pre" value="10000" step="100" oninput="calcIBS()"></div></div>
+              <div class="field"><label>REGIME / SETOR</label><select id="ibs_reg" onchange="calcIBS()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;appearance:none"><option value="0.265">Padrão (26,5%)</option><option value="0.106">Redução 60% — Saúde/Educação (10,6%)</option><option value="0.1855">Redução 30% — Transporte (18,55%)</option><option value="0">Isenção — Cesta Básica (0%)</option></select></div>
+              <div class="field"><label>% COMPRAS SOBRE VENDAS (base crédito)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="ibs_comp" class="has-suf" value="60" min="0" max="100" step="5" oninput="calcIBS()"></div></div>
+              <div class="field"><label>VALOR DOS CRÉDITOS (ou deixe calcular)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="ibs_cred" class="has-pre" placeholder="Auto" oninput="calcIBS()"></div></div>
+            </div>
+            <div class="card">
+              <div class="card-title"><svg viewBox="0 0 24 24"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>RESULTADO</div>
+              <div style="margin-bottom:14px">
+                <div class="result-row"><span class="result-name">Débito CBS (8,8% federal)</span><span class="result-val red" id="ibs_r_cbs">--</span></div>
+                <div class="result-row"><span class="result-name">Débito IBS (17,7% est./mun.)</span><span class="result-val red" id="ibs_r_ibs">--</span></div>
+                <div class="result-row"><span class="result-name">Total débito</span><span class="result-val red" id="ibs_r_deb">--</span></div>
+                <div class="result-row"><span class="result-name">Crédito a compensar</span><span class="result-val green" id="ibs_r_cred">--</span></div>
+                <div class="result-row"><span class="result-name">Valor a recolher</span><span class="result-val amber" id="ibs_r_rec">--</span></div>
+                <div class="result-row"><span class="result-name">Alíquota efetiva</span><span class="result-val accent" id="ibs_r_ef">--</span></div>
+              </div>
+              <div style="border-top:1px solid var(--border);padding-top:12px">
+                <div style="font-size:10px;font-weight:500;color:var(--text3);margin-bottom:8px;letter-spacing:0.06em">NOTA FISCAL</div>
+                <div class="result-row"><span class="result-name">Valor da operação</span><span class="result-val" id="ibs_r_op">--</span></div>
+                <div class="result-row"><span class="result-name">(+) IBS/CBS destacado na NF</span><span class="result-val red" id="ibs_r_nf_imp">--</span></div>
+                <div class="result-row"><span class="result-name">Total NF-e</span><span class="result-val amber" id="ibs_r_nf">--</span></div>
+              </div>
+              <div id="ibs_alerts" style="margin-top:12px"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CREDITOS TRIBUTARIOS -->
+      <div class="module" id="mod-tax-credits">
+        <div class="module-header"><div class="module-title">Simulador de Créditos</div><div class="module-desc">Compare o crédito tributário antes e depois da Reforma — impacto do crédito amplo IBS/CBS.</div></div>
+        <div class="module-body">
+          <div class="card">
+            <div class="cred-grid-header"><span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em">DESPESA</span><span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em;text-align:right">VALOR (R$)</span><span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em;text-align:right">CRED. ANTIGO</span><span style="font-size:10px;font-weight:500;color:var(--text3);letter-spacing:0.05em;text-align:right">CRED. NOVO</span></div>
+            <div id="cred_rows"></div>
+            <div style="display:grid;grid-template-columns:1fr 100px 100px 100px;gap:8px;padding:10px 0;border-top:1px solid var(--border);margin-top:6px"><span style="font-size:12px;font-weight:500">TOTAL</span><span style="font-family:var(--mono);font-size:12px;text-align:right" id="cred_tot_val">R$ 0</span><span style="font-family:var(--mono);font-size:12px;text-align:right;color:var(--red)" id="cred_tot_ant">R$ 0</span><span style="font-family:var(--mono);font-size:12px;text-align:right;color:var(--green)" id="cred_tot_novo">R$ 0</span></div>
+          </div>
+          <div class="grid-3" style="margin-bottom:14px">
+            <div class="stat-card"><div class="stat-label">CRÉDITO ADICIONAL/MÊS</div><div class="stat-value green" id="cred_r_add">--</div></div>
+            <div class="stat-card"><div class="stat-label">AUMENTO %</div><div class="stat-value green" id="cred_r_pct">--</div></div>
+            <div class="stat-card"><div class="stat-label">ECONOMIA ANUAL</div><div class="stat-value amber" id="cred_r_anual">--</div></div>
+          </div>
+          <div id="cred_alerts"></div>
+        </div>
+      </div>
+
+      <!-- TRANSICAO -->
+      <div class="module" id="mod-tax-transition">
+        <div class="module-header"><div class="module-title">Transição 2026-2033</div><div class="module-desc">Projeção ano a ano da carga tributária durante a implantação gradual da Reforma Tributária.</div></div>
+        <div class="module-body">
+          <div class="card">
+            <div class="grid-3" style="margin-bottom:12px">
+              <div class="field"><label>FATURAMENTO ANUAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="tr_fat" class="has-pre" value="1500000" step="10000" oninput="calcTransicao()"></div></div>
+              <div class="field"><label>SETOR</label><select id="tr_setor" onchange="calcTransicao()" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;appearance:none"><option value="comercio">Comércio</option><option value="servicos">Serviços</option><option value="industria">Indústria</option><option value="alimentacao">Alimentação</option><option value="ti">Tecnologia</option><option value="saude">Saúde</option><option value="construcao">Construção</option></select></div>
+              <div class="field"><label>MARGEM DE LUCRO (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="tr_margem" class="has-suf" value="15" min="0" max="80" oninput="calcTransicao()"></div></div>
+            </div>
+            <div class="grid-2">
+              <div class="field"><label>FOLHA MENSAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="tr_folha" class="has-pre" value="25000" step="1000" oninput="calcTransicao()"></div></div>
+              <div class="field"><label>DESPESAS DEDUTÍVEIS ANUAIS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="tr_desp" class="has-pre" value="600000" step="10000" oninput="calcTransicao()"></div></div>
+            </div>
+          </div>
+          <div class="card" style="padding:0;overflow:auto"><table class="trans-table" id="tr_table"></table></div>
+          <div id="tr_alerts" style="margin-top:14px"></div>
+        </div>
+      </div>
+
+      <!-- INVESTIMENTO -->
+      <div class="module" id="mod-investment">
+        <div class="module-header"><div class="module-title">Análise de Investimento</div><div class="module-desc">Payback, ROSE e comparativo com a taxa Selic para validar se o investimento vale a pena.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>DADOS DO INVESTIMENTO</div>
+                <div class="field"><label>INVESTIMENTO TOTAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="inv_total" class="has-pre" value="120000" step="5000" oninput="calcInv()"></div></div>
+                <div class="field"><label>EBITDA MENSAL ESPERADO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="inv_ebitda" class="has-pre" value="8000" step="500" oninput="calcInv()"></div></div>
+                <div class="field"><label>EBIT ANUAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="inv_ebit" class="has-pre" value="82000" step="1000" oninput="calcInv()"></div></div>
+                <div class="field"><label>TAXA SELIC ANUAL (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="inv_selic" class="has-suf" value="10.5" step="0.25" oninput="calcInv()"></div></div>
+              </div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 19c-5 1.5-5-2.5-7-3m14 6v-3.87a3.37 3.37 0 00-.94-2.61c3.14-.35 6.44-1.54 6.44-7A5.44 5.44 0 0020 4.77 5.07 5.07 0 0019.91 1S18.73.65 16 2.48a13.38 13.38 0 00-7 0C6.27.65 5.09 1 5.09 1A5.07 5.07 0 005 4.77a5.44 5.44 0 00-1.5 3.78c0 5.42 3.3 6.61 6.44 7A3.37 3.37 0 009 18.13V22"/></svg>CENÁRIOS</div>
+                <div class="field"><label>EBITDA PESSIMISTA (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="inv_pess" class="has-pre" value="5000" step="500" oninput="calcInv()"></div></div>
+                <div class="field"><label>EBITDA OTIMISTA (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="inv_otim" class="has-pre" value="12000" step="500" oninput="calcInv()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="grid-2" style="margin-bottom:16px">
+                  <div class="stat-card"><div class="stat-label">PAYBACK (MESES)</div><div class="stat-value amber" id="inv_pb">--</div></div>
+                  <div class="stat-card"><div class="stat-label">PAYBACK (ANOS)</div><div class="stat-value amber" id="inv_pb_anos">--</div></div>
+                  <div class="stat-card"><div class="stat-label">ROSE ANUAL</div><div class="stat-value green" id="inv_rose">--</div></div>
+                  <div class="stat-card"><div class="stat-label">VS. SELIC</div><div class="stat-value" id="inv_vs">--</div></div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;background:var(--surface2);border-radius:var(--radius);padding:16px;margin-bottom:14px">
+                  <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">ROSE DO NEGÓCIO</div><div style="font-family:var(--mono);font-size:24px;font-weight:500;color:var(--amber)" id="inv_rose2">--</div></div>
+                  <div style="font-size:11px;color:var(--text3)">VS</div>
+                  <div style="text-align:center"><div style="font-size:10px;color:var(--text3);margin-bottom:4px">SELIC (RENDA FIXA)</div><div style="font-family:var(--mono);font-size:24px;font-weight:500;color:var(--accent)" id="inv_selic2">--</div></div>
+                </div>
+                <div style="font-size:10px;font-weight:500;color:var(--text3);margin-bottom:8px;letter-spacing:0.06em">CENÁRIOS DE PAYBACK</div>
+                <div class="grid-3">
+                  <div class="stat-card"><div class="stat-label">PESSIMISTA</div><div class="stat-value red" id="inv_p_pess">--</div></div>
+                  <div class="stat-card"><div class="stat-label">REALISTA</div><div class="stat-value amber" id="inv_p_real">--</div></div>
+                  <div class="stat-card"><div class="stat-label">OTIMISTA</div><div class="stat-value green" id="inv_p_otim">--</div></div>
+                </div>
+                <div id="inv_alerts" style="margin-top:14px"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CUSTO DO COLABORADOR -->
+      <div class="module" id="mod-payroll-cost">
+        <div class="module-header"><div class="module-title">Custo do Colaborador</div><div class="module-desc">Calcule o custo real de um funcionário CLT incluindo todos os encargos e provisões.</div></div>
+        <div class="module-body">
+          <div class="grid-2">
+            <div>
+              <div class="card">
+                <div class="card-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>DADOS DO COLABORADOR</div>
+                <div class="field"><label>SALÁRIO BRUTO MENSAL (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="rh_sal" class="has-pre" value="3000" step="100" oninput="calcRH()"></div></div>
+                <div class="field"><label>VALE REFEIÇÃO / ALIMENTAÇÃO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="rh_vr" class="has-pre" value="400" step="50" oninput="calcRH()"></div></div>
+                <div class="field"><label>VALE TRANSPORTE (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="rh_vt" class="has-pre" value="150" step="10" oninput="calcRH()"></div></div>
+                <div class="field"><label>PLANO DE SAÚDE (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="rh_ps" class="has-pre" value="0" step="50" oninput="calcRH()"></div></div>
+                <div class="field"><label>OUTROS BENEFÍCIOS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="rh_outros" class="has-pre" value="0" step="50" oninput="calcRH()"></div></div>
+              </div>
+            </div>
+            <div>
+              <div class="card">
+                <div class="result-hero"><div class="result-hero-label">CUSTO TOTAL MENSAL</div><div class="result-hero-value" id="rh_total">R$ 0,00</div><div class="result-hero-sub" id="rh_mult">Multiplicador: 0,00x o salário bruto</div></div>
+                <div id="rh_rows" style="margin-bottom:14px"></div>
+                <div id="rh_alerts"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- CLT vs PJ vs MEI -->
+      <div class="module" id="mod-clt-pj">
+        <div class="module-header"><div class="module-title">CLT vs PJ vs MEI</div><div class="module-desc">Compare custo para a empresa e líquido para o profissional nas três modalidades.</div></div>
+        <div class="module-body">
+          <div class="card">
+            <div class="grid-3">
+              <div class="field"><label>VALOR DA REMUNERAÇÃO (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="clt_valor" class="has-pre" value="5000" step="500" oninput="calcCLTPJ()"></div></div>
+              <div class="field"><label>BENEFÍCIOS MENSAIS (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="clt_ben" class="has-pre" value="600" step="100" oninput="calcCLTPJ()"></div></div>
+              <div class="field"><label>ALÍQUOTA ISS PJ (%)</label><div class="input-wrap"><span class="input-suf">%</span><input type="number" id="clt_iss" class="has-suf" value="5" min="2" max="15" oninput="calcCLTPJ()"></div></div>
+            </div>
+          </div>
+          <div class="comp-grid" id="clt_grid"></div>
+          <div id="clt_alerts" style="margin-top:4px"></div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="bottom-nav">
+    <div class="bottom-nav-items">
+      <div class="bottom-nav-item active" onclick="mobileNav(this,'pricing-service')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg>Preço</div>
+      <div class="bottom-nav-item" onclick="mobileNav(this,'dre')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>Financeiro</div>
+      <div class="bottom-nav-item" onclick="mobileNav(this,'tax-regime')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>Tributos</div>
+      <div class="bottom-nav-item" onclick="mobileNav(this,'investment')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="20" x2="12" y2="10"/><line x1="18" y1="20" x2="18" y2="4"/><line x1="6" y1="20" x2="6" y2="16"/></svg>Invest.</div>
+      <div class="bottom-nav-item" onclick="mobileNav(this,'payroll-cost')"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 00-3-3.87"/><path d="M16 3.13a4 4 0 010 7.75"/></svg>RH</div>
+    </div>
+  </nav>
+</div>
+
+<!-- MODAL FLUXO DE CAIXA -->
+<div class="modal-overlay" id="cf-modal">
+  <div class="modal">
+    <div class="modal-title">Novo lançamento</div>
+    <div class="field"><label>DESCRIÇÃO</label><input type="text" id="cf_desc" placeholder="Ex: Venda produto X, Aluguel..."></div>
+    <div class="field"><label>TIPO</label><select id="cf_tipo" style="width:100%;padding:9px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:13px;outline:none;appearance:none"><option value="entrada">Entrada</option><option value="saida">Saída</option></select></div>
+    <div class="field"><label>CATEGORIA</label><input type="text" id="cf_cat" placeholder="Ex: Vendas, Fornecedores..."></div>
+    <div class="field"><label>VALOR (R$)</label><div class="input-wrap"><span class="input-pre">R$</span><input type="number" id="cf_valor" class="has-pre" placeholder="0,00" min="0" step="0.01"></div></div>
+    <div class="field"><label>DATA</label><input type="date" id="cf_data"></div>
+    <div class="modal-actions"><button class="btn btn-ghost" onclick="closeCashModal()">Cancelar</button><button class="btn btn-accent" onclick="saveCashEntry()">Salvar</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<script>
+const SUPA_URL='https://fqemuntgkgqiiejwdzjt.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxZW11bnRna2dxaWllandkemp0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODAxOTI5MTIsImV4cCI6MjA5NTc2ODkxMn0.FT1PEA8i0pUzVCXvJ71fx8vNyJi6f51uQAOrMxjjazA';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let currentUser=null,currentCompany=null,cashEntries=[],savedProducts=[];
+let insumos=[{nome:'Pão brioche',qty:1,unit:'un',preco:2.50},{nome:'Carne bovina 180g',qty:1,unit:'un',preco:4.20},{nome:'Queijo cheddar',qty:30,unit:'g',preco:0.049}];
+
+const fmt=(v,d=2)=>'R$ '+Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtN=(v,d=2)=>Number(v).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});
+const fmtP=(v,d=1)=>fmtN(v,d)+'%';
+const gv=id=>parseFloat(document.getElementById(id)?.value)||0;
+const el=id=>document.getElementById(id);
+const setTxt=(id,v)=>{const e=el(id);if(e)e.textContent=v};
+
+function showToast(msg,dur=2500){const t=el('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),dur)}
+
+function mkAlert(type,msg){
+  const icons={warn:'<svg viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>',ok:'<svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>',info:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',amber:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>'};
+  return `<div class="alert ${type}">${icons[type]||icons.info}<span>${msg}</span></div>`;
+}
+
+function provaBar(trackId,legendId,segs){
+  const total=segs.reduce((a,s)=>a+s.val,0);if(total<=0)return;
+  el(trackId).innerHTML=segs.map(s=>`<div class="prova-seg" style="width:${(s.val/total*100).toFixed(1)}%;background:${s.color}"></div>`).join('');
+  el(legendId).innerHTML=segs.map(s=>`<div class="prova-item"><div class="prova-dot" style="background:${s.color}"></div>${s.name} ${(s.val/total*100).toFixed(1)}%</div>`).join('');
+}
+
+function resultRow(name,val,cls='',pct=null){
+  return `<div class="result-row"><span class="result-name">${name}</span><span class="result-val ${cls}">${fmt(val)}${pct!==null?`<span class="result-pct">(${fmtP(pct)})</span>`:''}</span></div>`;
+}
+
+// AUTH
+function switchAuthTab(tab,el_){
+  document.querySelectorAll('.auth-tab').forEach(t=>t.classList.remove('active'));el_.classList.add('active');
+  el('auth-login').style.display=tab==='login'?'block':'none';el('auth-signup').style.display=tab==='signup'?'block':'none';
+  el('auth-msg').style.display='none';
+}
+async function doLogin(){
+  const email=el('login-email').value.trim(),pass=el('login-pass').value;
+  if(!email||!pass){showAuthMsg('Preencha e-mail e senha.','err');return;}
+  el('btn-login').disabled=true;el('btn-login').textContent='Entrando...';
+  const {error}=await sb.auth.signInWithPassword({email,password:pass});
+  el('btn-login').disabled=false;el('btn-login').textContent='Entrar';
+  if(error)showAuthMsg(error.message,'err');
+}
+async function doSignup(){
+  const name=el('signup-name').value.trim(),email=el('signup-email').value.trim(),pass=el('signup-pass').value;
+  if(!name||!email||!pass){showAuthMsg('Preencha todos os campos.','err');return;}
+  if(pass.length<6){showAuthMsg('Senha mínima: 6 caracteres.','err');return;}
+  el('btn-signup').disabled=true;el('btn-signup').textContent='Criando...';
+  const {error}=await sb.auth.signUp({email,password:pass,options:{data:{full_name:name}}});
+  el('btn-signup').disabled=false;el('btn-signup').textContent='Criar conta';
+  if(error)showAuthMsg(error.message,'err');else showAuthMsg('Conta criada! Verifique seu e-mail.','ok');
+}
+async function doLogout(){await sb.auth.signOut();}
+function showAuthMsg(msg,type){const m=el('auth-msg');m.textContent=msg;m.className=`auth-msg ${type}`;m.style.display='block';}
+
+// COMPANY
+async function loadCompany(){
+  if(!currentUser)return;
+  const {data}=await sb.from('companies').select('*').eq('owner_id',currentUser.id).limit(1).single();
+  if(data){currentCompany=data;setTxt('company-label',data.name);showApp();}
+  else showOnboarding();
+}
+async function saveCompany(){
+  const name=el('onb-name').value.trim();
+  if(!name){showOnbMsg('Nome obrigatório.','err');return;}
+  el('btn-onb').disabled=true;el('btn-onb').textContent='Salvando...';
+  const {data,error}=await sb.from('companies').insert({owner_id:currentUser.id,name,cnpj:el('onb-cnpj').value.trim()||null,sector:el('onb-sector').value,tax_regime:el('onb-regime').value,annual_revenue:parseFloat(el('onb-revenue').value)||0,monthly_payroll:parseFloat(el('onb-payroll').value)||0}).select().single();
+  el('btn-onb').disabled=false;el('btn-onb').textContent='Começar a usar o Simplus';
+  if(error){showOnbMsg('Erro: '+error.message,'err');return;}
+  currentCompany=data;setTxt('company-label',data.name);showApp();
+}
+function showOnbMsg(msg,type){const m=el('onb-msg');m.textContent=msg;m.className=`auth-msg ${type}`;m.style.display='block';}
+
+// SCREENS
+function showApp(){
+  el('auth-screen').style.display='none';el('onboarding-screen').style.display='none';
+  el('app').classList.add('visible');initAllModules();
+}
+function showOnboarding(){el('auth-screen').style.display='none';el('onboarding-screen').style.display='flex';}
+
+// NAVIGATION
+function navigate(navEl){
+  const mod=navEl.dataset.module;
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));navEl.classList.add('active');
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));
+  el('mod-'+mod)?.classList.add('active');
+  if(window.innerWidth<=767)toggleSidebar();
+}
+function mobileNav(navEl,mod){
+  document.querySelectorAll('.bottom-nav-item').forEach(n=>n.classList.remove('active'));navEl.classList.add('active');
+  document.querySelectorAll('.module').forEach(m=>m.classList.remove('active'));el('mod-'+mod)?.classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>{if(n.dataset.module===mod)n.classList.add('active');else n.classList.remove('active');});
+}
+function toggleSidebar(){el('sidebar').classList.toggle('open');el('sidebar-overlay').classList.toggle('open');}
+
+// INIT
+function initAllModules(){
+  calcServico();calcProduto();calcDRE();calcBE();calcFid();calcInv();calcRH();calcCLTPJ();
+  calcRegimes();calcIBS();calcTransicao();renderCredRows();renderInsumos();loadCashEntries();loadProducts();
+  if(currentCompany){
+    const aliq={simples:6,presumido:11.33,real:9.25};const r=currentCompany.tax_regime;
+    ['s_imp','p_imp','d_imp'].forEach(id=>{if(el(id))el(id).value=aliq[r]||6;});
+    const fat=currentCompany.annual_revenue||0,pay=currentCompany.monthly_payroll||0,sec=currentCompany.sector||'comercio';
+    if(fat>0){['cr_fat','tr_fat'].forEach(id=>{if(el(id))el(id).value=fat;});}
+    if(pay>0){['cr_folha','tr_folha'].forEach(id=>{if(el(id))el(id).value=pay;});}
+    ['cr_setor','tr_setor'].forEach(id=>{if(el(id))el(id).value=sec;});
+    calcRegimes();calcTransicao();
+  }
+  const name=currentUser?.user_metadata?.full_name||currentUser?.email||'?';
+  el('user-avatar').textContent=name[0].toUpperCase();
+  el('cf_data').value=new Date().toISOString().split('T')[0];
+}
+
+// SERVICOS
+function calcServico(){
+  const mao=gv('s_mao'),prod=gv('s_prod'),outros=gv('s_outros'),fixas=gv('s_fixas'),eventos=gv('s_eventos')||1,imp=gv('s_imp')/100,margem=gv('s_margem')/100;
+  const csv=mao+prod+outros,dfe=fixas/eventos,denom=1-imp-margem;
+  if(denom<=0){setTxt('s_pv','Inválido');return;}
+  const pv=(csv+dfe)/denom,markup=pv/(csv+dfe),impVal=pv*imp,lucro=pv*margem;
+  setTxt('s_pv',fmt(pv));setTxt('s_markup',`Markup: ${fmtN(markup)}x | DFE: ${fmt(dfe)}`);
+  setTxt('s_csv',fmt(csv));setTxt('s_dfe',fmt(dfe));setTxt('s_imp_val',fmt(impVal));setTxt('s_lucro',fmt(lucro));
+  provaBar('s_prova_track','s_prova_legend',[{name:'CSV',val:csv,color:'#3b82f6'},{name:'Desp.Fixa',val:dfe,color:'#8b5cf6'},{name:'Impostos',val:impVal,color:'#ef4444'},{name:'Lucro',val:lucro,color:'#22c55e'}]);
+  const al=[];
+  if(margem*100<15)al.push(mkAlert('warn',`Margem de ${fmtP(margem*100)} está abaixo do recomendado (mín. 15-20%).`));
+  if(eventos<10)al.push(mkAlert('amber',`Com ${eventos} eventos/mês, DFE = ${fmt(dfe)}. Aumentar volume reduz esse custo.`));
+  if(!al.length)al.push(mkAlert('ok',`Precificação saudável com margem de ${fmtP(margem*100)}.`));
+  el('s_alerts').innerHTML=al.join('');
+}
+
+// PRODUTOS
+function calcProduto(){
+  const ins=gv('p_ins'),perda=gv('p_perda')/100,rend=gv('p_rend')||1,imp=gv('p_imp')/100,fixas=gv('p_fixas')/100,reinv=gv('p_reinv')/100,margem=gv('p_margem')/100;
+  const cmvAdj=ins/(1-perda)/rend,soma=imp+fixas+reinv+margem;
+  if(soma>=1){setTxt('p_pv','Soma >= 100%');return;}
+  const markup=1/(1-soma),pv=cmvAdj*markup,vImp=pv*imp,vFix=pv*fixas,vReinv=pv*reinv,vLucro=pv*margem;
+  setTxt('p_pv',fmt(pv));setTxt('p_sub',`CMV Ajustado: ${fmt(cmvAdj)} · Markup: ${fmtN(markup)}x`);
+  el('p_rows').innerHTML=resultRow('CMV Ajustado',cmvAdj,'red',cmvAdj/pv*100)+resultRow('Custos variáveis',vImp,'red',imp*100)+resultRow('Despesas fixas',vFix,'',fixas*100)+resultRow('Reinvestimento',vReinv,'',reinv*100)+resultRow('Lucro líquido',vLucro,'green',margem*100);
+  provaBar('p_track','p_legend',[{name:'CMV',val:cmvAdj,color:'#3b82f6'},{name:'Impostos',val:vImp,color:'#ef4444'},{name:'Fixas',val:vFix,color:'#8b5cf6'},{name:'Reinv.',val:vReinv,color:'#d97706'},{name:'Lucro',val:vLucro,color:'#22c55e'}]);
+  const al=[];
+  if(cmvAdj/pv>0.45)al.push(mkAlert('warn',`CMV representa ${fmtP(cmvAdj/pv*100)} do preço. Ideal abaixo de 40%.`));
+  if(!al.length)al.push(mkAlert('ok','Composição equilibrada. Preço calculado corretamente.'));
+  el('p_alerts').innerHTML=al.join('');
+}
+
+// FICHA TECNICA
+function renderInsumos(){
+  const list=el('insumos-list');if(!list)return;
+  list.innerHTML=insumos.map((ins,i)=>`
+    <div style="display:grid;grid-template-columns:1fr 80px 90px 30px;gap:6px;margin-bottom:6px;align-items:center">
+      <input type="text" value="${ins.nome}" placeholder="Insumo" style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--sans);font-size:12px;outline:none" onchange="insumos[${i}].nome=this.value">
+      <input type="number" value="${ins.qty}" min="0.001" step="0.1" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;text-align:right" onchange="insumos[${i}].qty=parseFloat(this.value)||0;calcFicha()">
+      <input type="number" value="${ins.preco}" min="0" step="0.01" style="padding:7px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:12px;outline:none;text-align:right" onchange="insumos[${i}].preco=parseFloat(this.value)||0;calcFicha()">
+      <button onclick="insumos.splice(${i},1);renderInsumos();calcFicha()" style="background:var(--red-bg);border:none;color:var(--red);border-radius:var(--radius-sm);cursor:pointer;font-size:16px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;flex-shrink:0">x</button>
+    </div>`).join('');
+  calcFicha();
+}
+function addInsumo(){insumos.push({nome:'Novo insumo',qty:1,unit:'un',preco:0});renderInsumos();}
+function calcFicha(){
+  const rend=gv('ft_rend')||1,total=insumos.reduce((a,i)=>a+(i.qty*i.preco),0);
+  setTxt('ft_cmv',fmt(total/rend));return total/rend;
+}
+function usarCMV(){
+  const cmv=calcFicha();if(el('p_ins')){el('p_ins').value=cmv.toFixed(4);calcProduto();}
+  navigate(document.querySelector('.nav-item[data-module="pricing-product"]'));showToast('CMV aplicado na precificação.');
+}
+async function saveFicha(){
+  if(!currentCompany){showToast('Nenhuma empresa selecionada.');return;}
+  const nome=el('ft_nome')?.value.trim();if(!nome){showToast('Informe o nome.');return;}
+  const rend=gv('ft_rend')||1,cmv=calcFicha();
+  const {data,error}=await sb.from('products').insert({company_id:currentCompany.id,name:nome,type:'produto',category:el('ft_cat')?.value||null,yield_qty:rend,unit_cost:cmv,sale_price:cmv,margin_pct:20}).select().single();
+  if(error){showToast('Erro: '+error.message);return;}
+  if(insumos.length)await sb.from('ingredients').insert(insumos.map(i=>({product_id:data.id,name:i.nome,quantity:i.qty,unit:i.unit||'un',unit_price:i.preco})));
+  showToast('Ficha técnica salva!');loadProducts();
+}
+async function loadProducts(){
+  if(!currentCompany)return;
+  const {data}=await sb.from('products').select('*').eq('company_id',currentCompany.id).order('created_at',{ascending:false});
+  savedProducts=data||[];
+  const list=el('ft-products-list');if(!list)return;
+  if(!savedProducts.length){list.innerHTML='<div style="padding:16px;font-size:12px;color:var(--text2)">Nenhum produto salvo ainda.</div>';return;}
+  list.innerHTML=savedProducts.map(p=>`<div class="product-item" onclick="loadProduct('${p.id}')"><div><div class="product-name">${p.name}</div><div class="product-sub">${p.category||'Sem categoria'}</div></div><div class="product-price">${fmt(p.sale_price||0)}</div></div>`).join('');
+}
+async function loadProduct(id){
+  const p=savedProducts.find(x=>x.id===id);if(!p)return;
+  if(el('ft_nome'))el('ft_nome').value=p.name;if(el('ft_cat'))el('ft_cat').value=p.category||'';if(el('ft_rend'))el('ft_rend').value=p.yield_qty||1;
+  const {data}=await sb.from('ingredients').select('*').eq('product_id',id);
+  if(data&&data.length){insumos=data.map(i=>({nome:i.name,qty:i.quantity,unit:i.unit,preco:i.unit_price}));renderInsumos();}
+  showToast(`${p.name} carregado.`);
+}
+async function saveSimulation(type){
+  if(!currentCompany){showToast('Nenhuma empresa selecionada.');return;}
+  await sb.from('simulations').insert({company_id:currentCompany.id,type,inputs:{},results:{}});
+  showToast('Simulação salva no histórico!');
+}
+
+// DRE
+function calcDRE(){
+  const rb=gv('d_rb'),dev=gv('d_dev'),desc=gv('d_desc'),imp=gv('d_imp')/100,cmv=gv('d_cmv'),pessoal=gv('d_pessoal'),admin=gv('d_admin'),mkt=gv('d_mkt'),dep=gv('d_dep'),fin=gv('d_fin'),ir=gv('d_ir')/100;
+  const ded=dev+desc+(rb*imp),rl=rb-ded,lb=rl-cmv,despOp=pessoal+admin+mkt,ebitda=lb-despOp,ebit=ebitda-dep,lair=ebit-fin,irVal=Math.max(0,lair*ir),ll=lair-irVal;
+  const rows=[
+    {n:'Receita Bruta',v:rb,c:'',s:false,t:false},
+    {n:'(-) Deduções totais',v:-ded,c:'red',s:false},
+    {n:'= Receita Líquida',v:rl,c:rl>0?'green':'red',s:true},
+    {n:'(-) CMV / CSV',v:-cmv,c:'red',s:false},
+    {n:'= Lucro Bruto',v:lb,c:lb>0?'green':'red',s:true},
+    {n:'(-) Pessoal',v:-pessoal,c:'red',s:false},
+    {n:'(-) Administrativo',v:-admin,c:'red',s:false},
+    {n:'(-) Marketing',v:-mkt,c:'red',s:false},
+    {n:'= EBITDA',v:ebitda,c:ebitda>0?'green':'red',s:true},
+    {n:'(-) Depreciação',v:-dep,c:'red',s:false},
+    {n:'= EBIT',v:ebit,c:ebit>0?'green':'red',s:true},
+    {n:'(-) Resultado Financeiro',v:-fin,c:'red',s:false},
+    {n:'(-) IR / CSLL',v:-irVal,c:'red',s:false},
+    {n:'= LUCRO LÍQUIDO',v:ll,c:ll>0?'green':'red',s:false,t:true},
+  ];
+  el('dre-table').innerHTML=rows.map(r=>`<div class="result-row" style="${r.t?'font-weight:600;border-top:2px solid var(--border2)':''}${r.s?'background:var(--surface2);padding:8px 10px;border-radius:var(--radius-sm);margin:4px 0':''}"><span class="result-name">${r.n}</span><span class="result-val ${r.c}">${fmt(Math.abs(r.v))} ${r.v<0?'▼':'▲'}<span class="result-pct">(${fmtP(r.v/rb*100,1)})</span></span></div>`).join('');
+  const al=[];
+  if(ded/rb>0.2)al.push(mkAlert('warn',`Deduções = ${fmtP(ded/rb*100)} da receita. Revise descontos e impostos.`));
+  if(lb/rb<0.35)al.push(mkAlert('warn',`Lucro bruto de ${fmtP(lb/rb*100)} indica CMV alto ou precificação insuficiente.`));
+  if(ll<0)al.push(mkAlert('warn',`Prejuízo de ${fmt(Math.abs(ll))}. Ação imediata necessária.`));
+  if(ll>0&&ll/rb>0.1)al.push(mkAlert('ok',`Lucro líquido de ${fmtP(ll/rb*100)} sobre RB. Excelente resultado.`));
+  el('dre-alerts').innerHTML=al.join('');
+}
+
+// BREAK-EVEN
+function calcBE(){
+  const fixas=gv('be_fixas'),mc=gv('be_mc')/100,ticket=gv('be_ticket')||1,novo=gv('be_novo');
+  if(mc<=0)return;
+  const pe=fixas/mc,qtd=Math.ceil(pe/ticket),mcV=ticket*mc,esf=novo/mc;
+  setTxt('be_pe',fmt(pe));setTxt('be_sub',`${qtd} vendas necessárias/mês`);
+  setTxt('be_mcv',fmt(mcV));setTxt('be_mc_val',fmtP(mc*100));setTxt('be_dias',Math.ceil(qtd/22)+' dias úteis');
+  setTxt('be_esf',fmt(esf));el('be_esf_sub').textContent=`${Math.ceil(esf/ticket)} vendas extras para absorver o novo custo`;
+  const al=[];
+  if(mc<0.25)al.push(mkAlert('warn',`MC de ${fmtP(mc*100)} é baixa. Considere aumentar preços ou reduzir custos variáveis.`));
+  al.push(mkAlert('info',`Para absorver ${fmt(novo)}/mês, fature ${fmt(esf)} a mais — ${Math.ceil(esf/ticket)} vendas extras.`));
+  el('be_alerts').innerHTML=al.join('');
+}
+
+// FLUXO DE CAIXA
+function openCashModal(){el('cf-modal').classList.add('open');}
+function closeCashModal(){el('cf-modal').classList.remove('open');}
+async function saveCashEntry(){
+  if(!currentCompany){showToast('Nenhuma empresa selecionada.');return;}
+  const desc=el('cf_desc').value.trim(),tipo=el('cf_tipo').value,cat=el('cf_cat').value.trim(),valor=parseFloat(el('cf_valor').value)||0,data=el('cf_data').value;
+  if(!desc||!valor||!data){showToast('Preencha todos os campos.');return;}
+  const {error}=await sb.from('cash_flow_entries').insert({company_id:currentCompany.id,type:tipo,category:cat||null,description:desc,amount:valor,date:data});
+  if(error){showToast('Erro: '+error.message);return;}
+  closeCashModal();loadCashEntries();showToast('Lançamento salvo!');
+  el('cf_desc').value='';el('cf_valor').value='';el('cf_cat').value='';
+}
+async function loadCashEntries(){
+  if(!currentCompany)return;
+  const now=new Date(),fd=new Date(now.getFullYear(),now.getMonth(),1).toISOString().split('T')[0],ld=new Date(now.getFullYear(),now.getMonth()+1,0).toISOString().split('T')[0];
+  const {data}=await sb.from('cash_flow_entries').select('*').eq('company_id',currentCompany.id).gte('date',fd).lte('date',ld).order('date',{ascending:false});
+  cashEntries=data||[];
+  const ent=cashEntries.filter(e=>e.type==='entrada').reduce((a,e)=>a+Number(e.amount),0);
+  const sai=cashEntries.filter(e=>e.type==='saida').reduce((a,e)=>a+Number(e.amount),0);
+  const sal=ent-sai;
+  setTxt('cf_entradas',fmt(ent));setTxt('cf_saidas',fmt(sai));setTxt('cf_count',cashEntries.length);
+  const sEl=el('cf_saldo');sEl.textContent=fmt(sal);sEl.className='stat-value '+(sal>=0?'green':'red');
+  const list=el('cf_list');
+  if(!cashEntries.length){list.innerHTML='<div class="empty-state"><svg viewBox="0 0 24 24"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg><div style="font-size:15px;font-weight:500">Nenhum lançamento ainda</div><p>Clique em "Novo lançamento" para começar.</p></div>';return;}
+  list.innerHTML=`<table class="data-table"><thead><tr><th>DATA</th><th>DESCRIÇÃO</th><th>CATEGORIA</th><th>TIPO</th><th style="text-align:right">VALOR</th></tr></thead><tbody>${cashEntries.map(e=>`<tr><td>${new Date(e.date+'T12:00:00').toLocaleDateString('pt-BR')}</td><td>${e.description}</td><td>${e.category||'—'}</td><td><span class="badge ${e.type==='entrada'?'badge-green':'badge-red'}">${e.type==='entrada'?'Entrada':'Saída'}</span></td><td style="text-align:right;font-family:var(--mono);color:${e.type==='entrada'?'var(--green)':'var(--red)'}">${e.type==='entrada'?'+':'-'}${fmt(e.amount)}</td></tr>`).join('')}</tbody></table>`;
+}
+
+// FIDELIZACAO
+function calcFid(){
+  const fat=gv('fid_fat'),cli=gv('fid_cli')||1,pct=gv('fid_pct')/100,mc=gv('fid_mc')/100,perda=gv('fid_perda')/100,cac=gv('fid_cac');
+  const fieis=Math.round(cli*pct),rvFiel=(fat/cli)*1.8,perdaN=Math.round(fieis*perda),fatPerd=perdaN*rvFiel,lucroPerd=fatPerd*mc,repo=perdaN*cac;
+  setTxt('fid_impacto',fmt(fatPerd));el('fid_sub').textContent=`Perda de ${perdaN} clientes fiéis = ${fmt(fatPerd)}/mês`;
+  setTxt('fid_n',perdaN);setTxt('fid_lucro',fmt(lucroPerd));setTxt('fid_repo',fmt(repo));
+  const al=[];
+  al.push(mkAlert('amber',`Clientes fiéis geram em média ${fmt(rvFiel)}/mês cada — 80% mais que um cliente comum.`));
+  if(repo>lucroPerd)al.push(mkAlert('warn',`Reposição (${fmt(repo)}) supera o lucro perdido (${fmt(lucroPerd)}). Fidelizar é mais barato que captar.`));
+  el('fid_alerts').innerHTML=al.join('');
+}
+
+// TRIBUTARIO — PREMISSAS LC 214/2025
+const SETORES={
+  comercio:{presIRPJ:.08,presCSLL:.12,anexo:'I',issIcms:.02,ibsPleno:.092,pisDAS:.103,icmsDAS:.37},
+  servicos:{presIRPJ:.32,presCSLL:.32,anexo:'III',issIcms:.03,ibsPleno:.108,pisDAS:.09,icmsDAS:.20},
+  industria:{presIRPJ:.08,presCSLL:.12,anexo:'II',issIcms:.02,ibsPleno:.112,pisDAS:.09,icmsDAS:.32},
+  alimentacao:{presIRPJ:.08,presCSLL:.12,anexo:'I',issIcms:.02,ibsPleno:.092,pisDAS:.103,icmsDAS:.37},
+  ti:{presIRPJ:.32,presCSLL:.32,anexo:'III',issIcms:.03,ibsPleno:.108,pisDAS:.09,icmsDAS:.20},
+  saude:{presIRPJ:.32,presCSLL:.32,anexo:'III',issIcms:.03,ibsPleno:0,pisDAS:.09,icmsDAS:.20},
+  construcao:{presIRPJ:.08,presCSLL:.12,anexo:'IV',issIcms:.02,ibsPleno:.072,pisDAS:.08,icmsDAS:.25},
+};
+const SIMPLES_TAB={
+  I:[[180000,.040,0],[360000,.073,5940],[720000,.095,13860],[1800000,.107,22500],[3600000,.143,87300],[4800000,.190,378000]],
+  II:[[180000,.045,0],[360000,.078,5940],[720000,.100,13860],[1800000,.112,22500],[3600000,.147,85500],[4800000,.300,720000]],
+  III:[[180000,.060,0],[360000,.112,9360],[720000,.135,17640],[1800000,.160,35640],[3600000,.210,125640],[4800000,.330,648000]],
+  IV:[[180000,.045,0],[360000,.090,8100],[720000,.102,12420],[1800000,.140,39780],[3600000,.220,183780],[4800000,.330,828000]],
+};
+const CRONOGRAMA={
+  2026:{pisCofins:1,cbs:0,icmsIss:1,ibs:0,hibrido:false,obs:'Sistema atual.'},
+  2027:{pisCofins:0,cbs:1,icmsIss:.9,ibs:.1,hibrido:false,obs:'CBS em vigor. PIS/Cofins extintos.'},
+  2028:{pisCofins:0,cbs:1,icmsIss:.8,ibs:.2,hibrido:false,obs:'IBS a 20%. ICMS/ISS a 80%.'},
+  2029:{pisCofins:0,cbs:1,icmsIss:.7,ibs:.3,hibrido:true,obs:'Simples Híbrido disponível. IBS a 30%.'},
+  2030:{pisCofins:0,cbs:1,icmsIss:.6,ibs:.4,hibrido:true,obs:'IBS a 40%. ICMS/ISS a 60%.'},
+  2031:{pisCofins:0,cbs:1,icmsIss:.5,ibs:.5,hibrido:true,obs:'IBS e ICMS/ISS em paridade.'},
+  2032:{pisCofins:0,cbs:1,icmsIss:.4,ibs:.6,hibrido:true,obs:'IBS a 60%. ICMS/ISS residuais.'},
+  2033:{pisCofins:0,cbs:1,icmsIss:0,ibs:1,hibrido:true,obs:'Sistema pleno: IVA Dual.'},
+};
+const K={irpj:.15,irpjAd:.10,irpjLimAd:240000,csll:.09,pisCum:.0065,cofinsCum:.03,pisNcum:.0165,cofinsNcum:.076,inss:.20,cbs:.088,simplesMax:4800000,fatorRLim:.28};
+
+function calcSimples(fat,anexo){
+  const tab=SIMPLES_TAB[anexo];if(!tab||fat>K.simplesMax)return null;
+  const f=tab.find(r=>fat<=r[0])||tab[tab.length-1];
+  return{total:fat*(fat*f[1]-f[2])/fat,aliq:(fat*f[1]-f[2])/fat};
+}
+function calcPresumido(fat,folhaAnl,setor){
+  const s=SETORES[setor]||SETORES.comercio;
+  const bIRPJ=fat*s.presIRPJ,bCSLL=fat*s.presCSLL;
+  const irpj=bIRPJ*K.irpj+Math.max(0,bIRPJ-K.irpjLimAd)*K.irpjAd,csll=bCSLL*K.csll;
+  const pis=fat*K.pisCum,cof=fat*K.cofinsCum,iss=fat*s.issIcms,inss=folhaAnl*K.inss;
+  const total=irpj+csll+pis+cof+iss+inss;
+  return{total,aliq:total/fat,irpj,csll,pis,cof,iss,inss,det:{IRPJ:irpj,CSLL:csll,'PIS (cum.)':pis,'COFINS (cum.)':cof,'ISS/ICMS':iss,'INSS Patronal':inss}};
+}
+function calcReal(fat,lucro,despDed,folhaAnl,setor){
+  const s=SETORES[setor]||SETORES.comercio;
+  const irpj=lucro*K.irpj+Math.max(0,lucro-K.irpjLimAd)*K.irpjAd,csll=lucro*K.csll;
+  const pisLiq=Math.max(0,fat*K.pisNcum-despDed*K.pisNcum),cofLiq=Math.max(0,fat*K.cofinsNcum-despDed*K.cofinsNcum);
+  const iss=fat*s.issIcms,inss=folhaAnl*K.inss,total=irpj+csll+pisLiq+cofLiq+iss+inss;
+  return{total,aliq:total/fat,irpj,csll,pisLiq,cofLiq,iss,inss,det:{IRPJ:irpj,CSLL:csll,'PIS liq.':pisLiq,'COFINS liq.':cofLiq,'ISS/ICMS':iss,'INSS Patronal':inss}};
+}
+
+// COMPARATIVO REGIMES
+function calcRegimes(){
+  const fat=gv('cr_fat'),setor=el('cr_setor')?.value||'comercio',margem=gv('cr_margem')/100,folhaMes=gv('cr_folha'),despDed=gv('cr_desp'),folhaAnl=folhaMes*12,lucro=fat*margem;
+  const s=SETORES[setor]||SETORES.comercio,fatorR=folhaAnl/fat;
+  const anexoFinal=(fatorR>=K.fatorRLim&&(setor==='servicos'||setor==='ti'))?'III':s.anexo;
+  const pres=calcPresumido(fat,folhaAnl,setor),real=calcReal(fat,lucro,despDed,folhaAnl,setor),simp=calcSimples(fat,anexoFinal);
+  const regimes=[{nome:'Lucro Presumido',cor:'var(--accent)',r:pres},{nome:'Lucro Real',cor:'var(--text2)',r:real},{nome:'Simples Nacional',cor:'var(--text)',r:simp||{total:0,aliq:0,det:{}}}];
+  const melhor=regimes.reduce((a,b)=>a.r.total<b.r.total?a:b),pior=regimes.reduce((a,b)=>a.r.total>b.r.total?a:b);
+  el('cr_grid').innerHTML=regimes.map(reg=>{
+    const isBest=reg.nome===melhor.nome,det=reg.r.det||{};
+    return`<div class="card" style="border-color:${isBest?'var(--green)':'var(--border)'};background:${isBest?'var(--green-bg)':'var(--surface)'}"><div style="font-size:10px;color:var(--text3);margin-bottom:6px;display:flex;justify-content:space-between"><span>SISTEMA ATUAL</span>${isBest?'<span style="color:var(--green);font-weight:500">MELHOR</span>':''}</div><div style="font-size:14px;font-weight:600;color:${reg.cor};margin-bottom:12px">${reg.nome}</div>${Object.entries(det).map(([k,v])=>resultRow(k,v,'red',fat>0?v/fat*100:0)).join('')}<div style="height:1px;background:var(--border);margin:10px 0"></div>${resultRow('TOTAL ANUAL',reg.r.total,'amber',(reg.r.aliq||0)*100)}</div>`;
+  }).join('');
+  const an=el('cr_analise');an.style.display='block';
+  an.innerHTML=`<div class="card-title">ANÁLISE AUTOMÁTICA</div><div class="result-row"><span class="result-name">Melhor regime</span><span class="result-val green">${melhor.nome}</span></div><div class="result-row"><span class="result-name">Economia anual vs pior</span><span class="result-val amber">${fmt(pior.r.total-melhor.r.total)}</span></div><div class="result-row"><span class="result-name">Economia mensal</span><span class="result-val amber">${fmt((pior.r.total-melhor.r.total)/12)}/mês</span></div>${fat>K.simplesMax?mkAlert('warn','Faturamento acima de R$ 4,8M — fora do Simples Nacional.'):''}${fatorR>=K.fatorRLim?mkAlert('info',`Fator R = ${fmtP(fatorR*100,1)} (acima de 28%) — Simples com Anexo III.`):''}${mkAlert('info','ISS/ICMS é estimativa por setor. Consulte seu contador para valores exatos.')}`;
+}
+
+// IBS/CBS
+function calcIBS(){
+  const val=gv('ibs_val'),aliq=parseFloat(el('ibs_reg')?.value||'.265'),compPct=gv('ibs_comp')/100,credInput=gv('ibs_cred');
+  const debCBS=val*K.cbs*(aliq/.265||0),debIBS=val*(aliq-K.cbs*(aliq/.265||0)),debTotal=val*aliq;
+  const credito=credInput>0?credInput:val*compPct*aliq,creditoReal=Math.min(credito,debTotal),recolher=Math.max(0,debTotal-creditoReal),ef=val>0?recolher/val*100:0;
+  setTxt('ibs_r_cbs',fmt(debCBS));setTxt('ibs_r_ibs',fmt(debIBS));setTxt('ibs_r_deb',fmt(debTotal));
+  setTxt('ibs_r_cred',fmt(creditoReal));setTxt('ibs_r_rec',fmt(recolher));setTxt('ibs_r_ef',fmtP(ef));
+  setTxt('ibs_r_op',fmt(val));setTxt('ibs_r_nf_imp',fmt(debTotal));setTxt('ibs_r_nf',fmt(val+debTotal));
+  const al=[];
+  if(ef<10&&aliq>0)al.push(mkAlert('ok',`Alíquota efetiva de ${fmtP(ef)} após créditos. Excelente aproveitamento.`));
+  if(aliq===.265)al.push(mkAlert('info','Alíquota padrão 26,5%. Créditos sobre compras reduzem o valor efetivo a recolher.'));
+  el('ibs_alerts').innerHTML=al.join('');
+}
+
+// CREDITOS
+const DESPESAS_PADRAO=[{nome:'Matéria-prima / Mercadorias',val:30000,antPct:.0925},{nome:'Energia elétrica',val:3000,antPct:0},{nome:'Aluguel',val:8000,antPct:0},{nome:'Serviços de TI',val:2000,antPct:0},{nome:'Serviços de limpeza',val:2000,antPct:0},{nome:'Material de escritório',val:1000,antPct:0},{nome:'Telefonia / Internet',val:1500,antPct:0},{nome:'Manutenção de equipamentos',val:1000,antPct:0},{nome:'Consultorias',val:1000,antPct:0},{nome:'Frete / Transporte',val:4000,antPct:.0463}];
+function renderCredRows(){
+  const c=el('cred_rows');if(!c)return;
+  c.innerHTML=DESPESAS_PADRAO.map((d,i)=>`<div class="cred-grid-row"><span style="font-size:12px;color:var(--text2)">${d.nome}</span><div><input type="number" id="cred_v_${i}" value="${d.val}" style="width:100%;padding:6px 8px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);color:var(--text);font-family:var(--mono);font-size:11px;outline:none;text-align:right" oninput="calcCreditos()"></div><span style="font-family:var(--mono);font-size:11px;color:var(--red);text-align:right" id="cred_a_${i}">--</span><span style="font-family:var(--mono);font-size:11px;color:var(--green);text-align:right" id="cred_n_${i}">--</span></div>`).join('');
+  calcCreditos();
+}
+function calcCreditos(){
+  let tv=0,ta=0,tn=0;
+  DESPESAS_PADRAO.forEach((d,i)=>{const ev=el(`cred_v_${i}`);if(!ev)return;const v=parseFloat(ev.value)||0,ant=v*d.antPct,nov=v*.265;tv+=v;ta+=ant;tn+=nov;setTxt(`cred_a_${i}`,fmt(ant));setTxt(`cred_n_${i}`,fmt(nov));});
+  setTxt('cred_tot_val',fmt(tv));setTxt('cred_tot_ant',fmt(ta));setTxt('cred_tot_novo',fmt(tn));
+  const add=tn-ta,pct=ta>0?add/ta*100:0;setTxt('cred_r_add',fmt(add));setTxt('cred_r_pct',fmtP(pct));setTxt('cred_r_anual',fmt(add*12));
+  const al=[];
+  if(add>5000)al.push(mkAlert('ok',`Crédito adicional de ${fmt(add)}/mês com o crédito amplo da reforma.`));
+  if(pct>200)al.push(mkAlert('ok',`Aumento de ${fmtP(pct,0)} no aproveitamento de crédito.`));
+  al.push(mkAlert('info','No sistema novo, energia, aluguel, serviços e fretes também geram crédito de 26,5%.'));
+  el('cred_alerts').innerHTML=al.join('');
+}
+
+// TRANSICAO 2026-2033
+function calcTransicao(){
+  const fat=gv('tr_fat'),setor=el('tr_setor')?.value||'comercio',margem=gv('tr_margem')/100,folhaMes=gv('tr_folha'),despDed=gv('tr_desp'),folhaAnl=folhaMes*12,lucro=fat*margem;
+  const s=SETORES[setor]||SETORES.comercio,anos=[2026,2027,2028,2029,2030,2031,2032,2033];
+  const rows=anos.map(ano=>{
+    const cr=CRONOGRAMA[ano];
+    const bp=calcPresumido(fat,folhaAnl,setor);
+    const tP=bp.irpj+bp.csll+bp.inss+(bp.pis+bp.cof)*cr.pisCofins+fat*K.cbs*cr.cbs+bp.iss*cr.icmsIss+fat*s.ibsPleno*cr.ibs;
+    const br=calcReal(fat,lucro,despDed,folhaAnl,setor);
+    const tR=br.irpj+br.csll+br.inss+(br.pisLiq+br.cofLiq)*cr.pisCofins+fat*K.cbs*cr.cbs+br.iss*cr.icmsIss+fat*s.ibsPleno*cr.ibs;
+    const si=calcSimples(fat,s.anexo),tS=si?si.total*(1-cr.ibs*s.icmsDAS)+fat*s.ibsPleno*cr.ibs:null;
+    const tH=cr.hibrido&&si?si.total*(1-s.icmsDAS-s.pisDAS)+fat*K.cbs*cr.cbs+fat*s.ibsPleno*cr.ibs+si.total*s.pisDAS*cr.pisCofins:null;
+    const vals=[tP,tR,tS,tH].filter(v=>v!==null),minV=Math.min(...vals);
+    return{ano,tP,tR,tS,tH,minV,cr};
+  });
+  const th=(t,l)=>`<th style="padding:8px 10px;font-size:9px;font-weight:500;color:var(--text3);letter-spacing:0.07em;text-align:${l?'left':'right'};border-bottom:1px solid var(--border);white-space:nowrap">${t}</th>`;
+  const td=(v,best)=>`<td style="padding:8px 10px;font-family:var(--mono);font-size:11px;text-align:right;border-bottom:1px solid var(--border);color:${best?'var(--green)':'var(--text2)'};font-weight:${best?600:400};white-space:nowrap">${v}</td>`;
+  el('tr_table').innerHTML=`<thead><tr>${th('ANO',true)}${th('PRESUMIDO')}${th('REAL')}${th('SIMPLES')}${th('HÍBRIDO')}${th('OBSERVAÇÃO',true)}</tr></thead><tbody>${rows.map(r=>`<tr style="${r.ano===2033?'background:var(--amber-bg)':r.ano===2027?'background:var(--surface2)':''}"><td style="padding:8px 10px;font-size:12px;font-weight:500;border-bottom:1px solid var(--border)">${r.ano}${r.ano===2027?' <span style="font-size:9px;color:var(--amber)">[CBS]</span>':''}${r.ano===2033?' <span style="font-size:9px;color:var(--red)">[PLENO]</span>':''}</td>${td(fmt(r.tP),r.tP===r.minV)}${td(fmt(r.tR),r.tR===r.minV)}${td(r.tS!==null?fmt(r.tS):'—',r.tS===r.minV)}${td(r.tH!==null?fmt(r.tH):'N/A',r.tH===r.minV)}<td style="padding:8px 10px;font-size:10px;color:var(--text2);border-bottom:1px solid var(--border)">${r.cr.obs}</td></tr>`).join('')}</tbody>`;
+  const r0=rows[0],r7=rows[7],m0=Math.min(r0.tP,r0.tR,...(r0.tS!==null?[r0.tS]:[])),m7=Math.min(r7.tP,r7.tR,...(r7.tS?[r7.tS]:[]),...(r7.tH?[r7.tH]:[]));
+  const delta=m7-m0,al=[];
+  al.push(delta>0?mkAlert('warn',`No regime pleno (2033), a carga mínima aumenta ${fmt(delta)}/ano vs 2026.`):mkAlert('ok',`No regime pleno (2033), a carga mínima diminui ${fmt(Math.abs(delta))}/ano.`));
+  al.push(mkAlert('info','A partir de 2029, o Simples Híbrido pode ser a melhor opção. Consulte seu contador.'));
+  el('tr_alerts').innerHTML=al.join('');
+}
+
+// INVESTIMENTO
+function calcInv(){
+  const inv=gv('inv_total'),ebitda=gv('inv_ebitda'),ebit=gv('inv_ebit'),selic=gv('inv_selic'),pess=gv('inv_pess'),otim=gv('inv_otim');
+  const pb=inv/ebitda,rose=ebit/inv*100,diff=rose-selic;
+  setTxt('inv_pb',fmtN(pb,1));setTxt('inv_pb_anos',fmtN(pb/12,1)+' anos');setTxt('inv_rose',fmtP(rose));setTxt('inv_rose2',fmtP(rose));setTxt('inv_selic2',fmtP(selic));
+  const vsEl=el('inv_vs');vsEl.textContent=(diff>=0?'+':'')+fmtP(diff);vsEl.className='stat-value '+(diff>=0?'green':'red');
+  setTxt('inv_p_pess',pess>0?fmtN(inv/pess,1)+' m':'inf');setTxt('inv_p_real',fmtN(pb,1)+' m');setTxt('inv_p_otim',otim>0?fmtN(inv/otim,1)+' m':'inf');
+  const al=[];
+  if(rose<selic)al.push(mkAlert('warn',`ROSE de ${fmtP(rose)}/ano abaixo da Selic (${fmtP(selic)}/ano). Capital renderia mais em renda fixa.`));
+  else al.push(mkAlert('ok',`ROSE de ${fmtP(rose)}/ano supera a Selic em ${fmtP(diff)}. Investimento atrativo.`));
+  if(pb/12>5)al.push(mkAlert('amber',`Payback de ${fmtN(pb/12,1)} anos é elevado. Avalie como acelerar o retorno.`));
+  el('inv_alerts').innerHTML=al.join('');
+}
+
+// RH — CUSTO DO COLABORADOR
+function calcRH(){
+  const sal=gv('rh_sal'),vr=gv('rh_vr'),vt=gv('rh_vt'),ps=gv('rh_ps'),outros=gv('rh_outros');
+  const fgts=sal*0.08,inss_pat=sal*0.20,dec_ter=sal/12,ferias=sal/12,fer_ter=ferias/3,aviso=sal/12;
+  const provisoes=dec_ter+ferias+fer_ter+aviso,beneficios=vr+vt+ps+outros,total=sal+fgts+inss_pat+provisoes+beneficios;
+  const mult=sal>0?total/sal:0;
+  setTxt('rh_total',fmt(total));setTxt('rh_mult',`Multiplicador: ${fmtN(mult)}x o salário bruto`);
+  el('rh_rows').innerHTML=resultRow('Salário bruto',sal,'')+resultRow('FGTS (8%)',fgts,'red')+resultRow('INSS Patronal (20%)',inss_pat,'red')+resultRow('13º (provisão)',dec_ter,'red')+resultRow('Férias + 1/3 (provisão)',ferias+fer_ter,'red')+resultRow('Aviso prévio (provisão)',aviso,'red')+resultRow('Benefícios totais',beneficios,'')+`<div class="result-row" style="font-weight:600;border-top:2px solid var(--border2)"><span class="result-name">CUSTO TOTAL MENSAL</span><span class="result-val amber">${fmt(total)}</span></div>`;
+  const al=[];
+  if(mult>2)al.push(mkAlert('amber',`O custo real é ${fmtN(mult)}x o salário. Para cada ${fmt(sal)} de salário, a empresa desembolsa ${fmt(total)}.`));
+  al.push(mkAlert('info','Não inclui horas extras, afastamentos ou indenizações. Consulte seu DP para valores exatos.'));
+  el('rh_alerts').innerHTML=al.join('');
+}
+
+// CLT vs PJ vs MEI
+function calcCLTPJ(){
+  const valor=gv('clt_valor'),ben=gv('clt_ben'),iss=gv('clt_iss')/100;
+  const fgts=valor*0.08,inss_pat=valor*0.20,prov=valor*0.33,custoEmpresaCLT=valor+fgts+inss_pat+prov+ben;
+  const inssPro=Math.min(valor*0.14,908),ir=Math.max(0,valor>4664.68?valor*0.275-896:valor>3751.05?valor*0.225-636.13:valor>2826.65?valor*0.15-354.80:valor>1903.98?valor*0.075-142.80:0);
+  const liquidoCLT=valor-inssPro-ir,custoEmpresaPJ=valor+(valor*iss),impostosPJ=valor*0.06+valor*0.02,liquidoPJ=valor-impostosPJ;
+  const limMEI=6750,viavel=valor<=limMEI,dasMEI=76.90,liquidoMEI=viavel?valor-dasMEI:null;
+  const opcoes=[
+    {nome:'CLT',tag:'Vínculo empregatício',custo:custoEmpresaCLT,liquido:liquidoCLT,desc:`Empresa paga ${fmt(custoEmpresaCLT)}. Profissional recebe ${fmt(liquidoCLT)} líquido.`,ok:true},
+    {nome:'PJ',tag:'Pessoa Jurídica',custo:custoEmpresaPJ,liquido:liquidoPJ,desc:`Empresa paga ${fmt(custoEmpresaPJ)} (nota + ISS). Profissional recebe ~${fmt(liquidoPJ)} líquido.`,ok:true},
+    {nome:'MEI',tag:'Microempreendedor',custo:viavel?valor:null,liquido:liquidoMEI,desc:viavel?`Empresa paga ${fmt(valor)}. DAS fixo de R$ 76,90/mês.`:`Valor (${fmt(valor)}) supera o teto MEI (${fmt(limMEI)}/mês).`,ok:viavel},
+  ];
+  const melhorCusto=opcoes.filter(o=>o.custo!==null).reduce((a,b)=>a.custo<b.custo?a:b);
+  el('clt_grid').innerHTML=opcoes.map(o=>`<div class="card" style="border-color:${!o.ok?'var(--red)':o.nome===melhorCusto.nome?'var(--green)':'var(--border)'};background:${!o.ok?'var(--red-bg)':o.nome===melhorCusto.nome?'var(--green-bg)':'var(--surface)'}"><div style="font-size:10px;color:var(--text3);margin-bottom:4px;display:flex;justify-content:space-between"><span>${o.tag}</span>${o.nome===melhorCusto.nome&&o.ok?'<span style="color:var(--green);font-weight:500">MENOR CUSTO</span>':''}</div><div style="font-size:16px;font-weight:600;margin-bottom:12px">${o.nome}</div><div class="result-row"><span class="result-name">Custo empresa</span><span class="result-val red">${o.custo!==null?fmt(o.custo):'N/A'}</span></div><div class="result-row"><span class="result-name">Líquido profissional</span><span class="result-val green">${o.liquido!==null?fmt(o.liquido):'N/A'}</span></div><div style="font-size:11px;color:var(--text2);margin-top:8px;line-height:1.4">${o.desc}</div></div>`).join('');
+  el('clt_alerts').innerHTML=mkAlert('amber','PJ e MEI têm menor custo, mas menor proteção trabalhista. A decisão envolve fatores além do custo financeiro.')+mkAlert('info','IR do CLT pela tabela progressiva 2024. Cálculos simplificados — consulte seu contador.');
+}
+
+// AUTH LISTENER
+sb.auth.onAuthStateChange(async(event,session)=>{
+  if(session?.user){currentUser=session.user;await loadCompany();}
+  else{currentUser=null;currentCompany=null;el('app').classList.remove('visible');el('auth-screen').style.display='flex';el('onboarding-screen').style.display='none';}
+});
+el('login-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
+el('signup-pass')?.addEventListener('keydown',e=>{if(e.key==='Enter')doSignup();});
+</script>
+</body>
+</html>
